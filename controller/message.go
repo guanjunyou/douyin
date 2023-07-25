@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/RaymondCode/simple-demo/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -9,13 +10,13 @@ import (
 	"time"
 )
 
-var tempChat = map[string][]Message{}
+var tempChat = map[string][]models.Message{}
 
 var messageIdSequence = int64(1)
 
 type ChatResponse struct {
-	Response
-	MessageList []Message `json:"message_list"`
+	models.Response
+	MessageList []models.Message `json:"message_list"`
 }
 
 // MessageAction no practical effect, just check if token is valid
@@ -29,7 +30,7 @@ func MessageAction(c *gin.Context) {
 		chatKey := genChatKey(user.Id, int64(userIdB))
 
 		atomic.AddInt64(&messageIdSequence, 1)
-		curMessage := Message{
+		curMessage := models.Message{
 			Id:         messageIdSequence,
 			Content:    content,
 			CreateTime: time.Now().Format(time.Kitchen),
@@ -38,11 +39,11 @@ func MessageAction(c *gin.Context) {
 		if messages, exist := tempChat[chatKey]; exist {
 			tempChat[chatKey] = append(messages, curMessage)
 		} else {
-			tempChat[chatKey] = []Message{curMessage}
+			tempChat[chatKey] = []models.Message{curMessage}
 		}
-		c.JSON(http.StatusOK, Response{StatusCode: 0})
+		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
 }
 
@@ -55,9 +56,9 @@ func MessageChat(c *gin.Context) {
 		userIdB, _ := strconv.Atoi(toUserId)
 		chatKey := genChatKey(user.Id, int64(userIdB))
 
-		c.JSON(http.StatusOK, ChatResponse{Response: Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
+		c.JSON(http.StatusOK, ChatResponse{Response: models.Response{StatusCode: 0}, MessageList: tempChat[chatKey]})
 	} else {
-		c.JSON(http.StatusOK, Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
 	}
 }
 
