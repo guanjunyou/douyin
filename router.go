@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func initRouter(r *gin.Engine) {
+func initRouter1(r *gin.Engine) {
 	// public directory is used to serve static resources
 	r.Static("/static", "./public")
 
