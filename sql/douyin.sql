@@ -11,7 +11,7 @@
  Target Server Version : 50714 (5.7.14)
  File Encoding         : 65001
 
- Date: 25/07/2023 22:51:19
+ Date: 25/07/2023 22:58:24
 */
 
 SET NAMES utf8mb4;
@@ -22,7 +22,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `comment`;
 CREATE TABLE `comment`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(20) NOT NULL,
   `user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论用户的id',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论内容',
   `vedio_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论的视频id',
@@ -40,7 +40,7 @@ CREATE TABLE `comment`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `follow`;
 CREATE TABLE `follow`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '用户id',
   `follow_user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '关注的用户id',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -57,7 +57,7 @@ CREATE TABLE `follow`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `like`;
 CREATE TABLE `like`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `vedio_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -74,7 +74,7 @@ CREATE TABLE `like`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `message`;
 CREATE TABLE `message`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '消息内容',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `is_deleted` int(1) NULL DEFAULT NULL,
@@ -90,7 +90,7 @@ CREATE TABLE `message`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `message_push_event`;
 CREATE TABLE `message_push_event`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `from_user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '发送者的id',
   `msg_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '消息内容',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -107,7 +107,7 @@ CREATE TABLE `message_push_event`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `message_send_event`;
 CREATE TABLE `message_send_event`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `to_user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `msg_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE `message_send_event`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user`  (
-  `id` int(64) NOT NULL COMMENT '用户id',
+  `id` bigint(64) NOT NULL COMMENT '用户id',
   `username` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '姓名',
   `follow_count` int(8) NULL DEFAULT NULL COMMENT '关注数',
   `follower_count` int(8) NULL DEFAULT NULL COMMENT '粉丝数',
@@ -149,7 +149,7 @@ CREATE TABLE `user`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `video`;
 CREATE TABLE `video`  (
-  `id` int(64) NOT NULL,
+  `id` bigint(64) NOT NULL,
   `author_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '视频作者',
   `play_url` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '播放路径',
   `cover_url` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,

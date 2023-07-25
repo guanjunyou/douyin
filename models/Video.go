@@ -2,7 +2,7 @@ package models
 
 type Video struct {
 	CommonEntity
-	Id            int64  `json:"id,omitempty"`
+	//Id            int64  `json:"id,omitempty"`
 	Author        User   `json:"author"`
 	PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
 	CoverUrl      string `json:"cover_url,omitempty"`

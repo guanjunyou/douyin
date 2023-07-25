@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type User struct {
 	CommonEntity
-	Id            int64  `json:"id,omitempty"`
+	//Id            int64  `json:"id,omitempty"`
 	Name          string `json:"name,omitempty"`
 	FollowCount   int64  `json:"follow_count,omitempty"`
 	FollowerCount int64  `json:"follower_count,omitempty"`
