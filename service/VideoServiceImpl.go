@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/jinzhu/copier"
 )
@@ -12,7 +11,7 @@ type VideoServiceImpl struct {
 
 func (videoService VideoServiceImpl) GetVideoList() ([]models.VideoDVO, error) {
 	videolist, err := models.GetVideoList()
-	VideoDVOList := make([]models.VideoDVO, config.VideoCount)
+	VideoDVOList := make([]models.VideoDVO, len(videolist))
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +29,7 @@ func (videoService VideoServiceImpl) GetVideoList() ([]models.VideoDVO, error) {
 			return nil, err1
 		}
 		videoDVO.Author = user
-		VideoDVOList = append(VideoDVOList, videoDVO)
+		VideoDVOList[i] = videoDVO
 		//VideoDVOList = append(VideoDVOList, models.VideoDVO{
 		//	CommonEntity:  videolist[i].CommonEntity,
 		//	Author:        user,
