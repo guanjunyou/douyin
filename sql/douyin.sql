@@ -1,35 +1,33 @@
 /*
- Navicat Premium Data Transfer
+Navicat MySQL Data Transfer
 
- Source Server         : mydp
- Source Server Type    : MySQL
- Source Server Version : 50714 (5.7.14)
- Source Host           : localhost:3306
- Source Schema         : douyin
+Source Server         : 本地主机
+Source Server Version : 50724
+Source Host           : localhost:3306
+Source Database       : douyin
 
- Target Server Type    : MySQL
- Target Server Version : 50714 (5.7.14)
- File Encoding         : 65001
+Target Server Type    : MYSQL
+Target Server Version : 50724
+File Encoding         : 65001
 
- Date: 26/07/2023 13:35:48
+Date: 2023-07-26 15:09:13
 */
 
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
+SET FOREIGN_KEY_CHECKS=0;
 
 -- ----------------------------
 -- Table structure for comment
 -- ----------------------------
 DROP TABLE IF EXISTS `comment`;
-CREATE TABLE `comment`  (
+CREATE TABLE `comment` (
   `id` bigint(64) NOT NULL,
   `user_id` bigint(64) NOT NULL COMMENT '评论用户的id',
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论内容',
-  `vedio_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论的视频id',
+  `content` text NOT NULL COMMENT '评论内容',
+  `vedio_id` varchar(64) NOT NULL COMMENT '评论的视频id',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of comment
@@ -39,14 +37,14 @@ CREATE TABLE `comment`  (
 -- Table structure for follow
 -- ----------------------------
 DROP TABLE IF EXISTS `follow`;
-CREATE TABLE `follow`  (
+CREATE TABLE `follow` (
   `id` bigint(64) NOT NULL,
-  `user_id` bigint(22) NULL DEFAULT NULL COMMENT '用户id',
-  `follow_user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '关注的用户id',
+  `user_id` bigint(64) DEFAULT NULL COMMENT '用户id',
+  `follow_user_id` bigint(64) DEFAULT NULL COMMENT '关注的用户id',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of follow
@@ -56,14 +54,14 @@ CREATE TABLE `follow`  (
 -- Table structure for like
 -- ----------------------------
 DROP TABLE IF EXISTS `like`;
-CREATE TABLE `like`  (
+CREATE TABLE `like` (
   `id` bigint(64) NOT NULL,
-  `vedio_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+  `vedio_id` bigint(64) DEFAULT NULL,
+  `user_id` bigint(64) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of like
@@ -73,13 +71,13 @@ CREATE TABLE `like`  (
 -- Table structure for message
 -- ----------------------------
 DROP TABLE IF EXISTS `message`;
-CREATE TABLE `message`  (
+CREATE TABLE `message` (
   `id` bigint(64) NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '消息内容',
+  `content` text NOT NULL COMMENT '消息内容',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of message
@@ -89,14 +87,14 @@ CREATE TABLE `message`  (
 -- Table structure for message_push_event
 -- ----------------------------
 DROP TABLE IF EXISTS `message_push_event`;
-CREATE TABLE `message_push_event`  (
+CREATE TABLE `message_push_event` (
   `id` bigint(64) NOT NULL,
-  `from_user_id` bigint(64) NULL DEFAULT NULL COMMENT '发送者的id',
-  `msg_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '消息内容',
+  `from_user_id` bigint(64) DEFAULT NULL COMMENT '发送者的id',
+  `msg_content` text COMMENT '消息内容',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of message_push_event
@@ -106,15 +104,15 @@ CREATE TABLE `message_push_event`  (
 -- Table structure for message_send_event
 -- ----------------------------
 DROP TABLE IF EXISTS `message_send_event`;
-CREATE TABLE `message_send_event`  (
+CREATE TABLE `message_send_event` (
   `id` bigint(64) NOT NULL,
-  `user_id` bigint(20) NOT NULL,
-  `to_user_id` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `msg_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `user_id` bigint(64) NOT NULL,
+  `to_user_id` bigint(64) NOT NULL,
+  `msg_content` text NOT NULL,
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of message_send_event
@@ -124,55 +122,55 @@ CREATE TABLE `message_send_event`  (
 -- Table structure for user
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user`  (
+CREATE TABLE `user` (
   `id` bigint(64) NOT NULL COMMENT '用户id',
-  `username` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '姓名',
-  `follow_count` int(8) NULL DEFAULT NULL COMMENT '关注数',
-  `follower_count` int(8) NULL DEFAULT NULL COMMENT '粉丝数',
-  `phone` varchar(11) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '电话',
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '密码',
-  `icon` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '头像',
-  `gender` int(2) NULL DEFAULT NULL COMMENT '性别',
-  `age` int(2) NULL DEFAULT NULL COMMENT '年龄',
+  `username` varchar(20) DEFAULT NULL COMMENT '姓名',
+  `follow_count` int(8) DEFAULT NULL COMMENT '关注数',
+  `follower_count` int(8) DEFAULT NULL COMMENT '粉丝数',
+  `phone` varchar(11) NOT NULL COMMENT '电话',
+  `password` varchar(255) DEFAULT NULL COMMENT '密码',
+  `icon` varchar(255) DEFAULT NULL COMMENT '头像',
+  `gender` int(2) DEFAULT NULL COMMENT '性别',
+  `age` int(2) DEFAULT NULL COMMENT '年龄',
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
-  `nickname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '昵称',
+  `is_deleted` int(1) DEFAULT NULL,
+  `nickname` varchar(255) DEFAULT NULL COMMENT '昵称',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (7089783222816474111, '张三', 1, 1, '1', '1', '1', 1, 1, '2023-07-26 13:35:27', 0, '1');
+INSERT INTO `user` VALUES ('7089783222816474111', '张三', '1', '1', '1', '1', '1', '1', '1', '2023-07-26 13:35:27', '0', '1');
 
 -- ----------------------------
 -- Table structure for video
 -- ----------------------------
 DROP TABLE IF EXISTS `video`;
-CREATE TABLE `video`  (
+CREATE TABLE `video` (
   `id` bigint(64) NOT NULL,
-  `author_id` bigint(22) NOT NULL COMMENT '视频作者',
-  `play_url` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '播放路径',
-  `cover_url` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `favorite_count` int(8) NULL DEFAULT NULL COMMENT '喜欢数量',
-  `comment_count` int(8) NULL DEFAULT NULL COMMENT '评论数量',
-  `is_favorite` int(2) NULL DEFAULT NULL,
+  `author_id` bigint(64) NOT NULL COMMENT '视频作者',
+  `play_url` varchar(2048) NOT NULL COMMENT '播放路径',
+  `cover_url` varchar(2048) NOT NULL,
+  `favorite_count` int(8) DEFAULT NULL COMMENT '喜欢数量',
+  `comment_count` int(8) DEFAULT NULL COMMENT '评论数量',
+  `is_favorite` int(2) DEFAULT NULL,
   `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` int(1) NULL DEFAULT NULL,
+  `is_deleted` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Records of video
 -- ----------------------------
-INSERT INTO `video` VALUES (7089783222816474112, 7089783222816474111, 'https://www.w3schools.com/html/movie.mp4', 'https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg', 0, 0, 0, '2023-07-26 13:18:01', 0);
+INSERT INTO `video` VALUES ('7089783222816474112', '7089783222816474111', 'https://www.w3schools.com/html/movie.mp4', 'https://cdn.pixabay.com/photo/2016/03/27/18/10/bear-1283347_1280.jpg', '0', '0', '0', '2023-07-26 13:18:01', '0');
 
 -- ----------------------------
 -- Procedure structure for addFollowRelation
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `addFollowRelation`;
-delimiter ;;
-CREATE PROCEDURE `addFollowRelation`(IN user_id int,IN follower_id int)
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `addFollowRelation`(IN user_id int,IN follower_id int)
 BEGIN
 	#Routine body goes here...
 	# 声明记录个数变量。
@@ -190,14 +188,14 @@ BEGIN
 	END IF;
 END
 ;;
-delimiter ;
+DELIMITER ;
 
 -- ----------------------------
 -- Procedure structure for delFollowRelation
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `delFollowRelation`;
-delimiter ;;
-CREATE PROCEDURE `delFollowRelation`(IN `user_id` int,IN `follower_id` int)
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `delFollowRelation`(IN `user_id` int,IN `follower_id` int)
 BEGIN
 	#Routine body goes here...
 	# 定义记录个数变量，记录是否存在此关系，默认没有关系。
@@ -210,6 +208,4 @@ BEGIN
 	END IF;
 END
 ;;
-delimiter ;
-
-SET FOREIGN_KEY_CHECKS = 1;
+DELIMITER ;
