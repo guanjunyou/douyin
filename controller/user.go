@@ -1,11 +1,16 @@
 package controller
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
 	"sync/atomic"
+	"time"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -34,6 +39,12 @@ type UserResponse struct {
 	User models.User `json:"user"`
 }
 
+// 拼装 UserService
+func GetUserService() service.UserServiceImpl {
+	var userService service.UserServiceImpl
+	return userService
+}
+
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
@@ -41,26 +52,35 @@ func Register(c *gin.Context) {
 	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	password = string(encrypt)
 
-	token := username + password
+	atomic.AddInt64(&userIdSequence, 1)
+	newUser := models.User{
+		CommonEntity: models.NewCommonEntity(),
+		UserName:     username,
+		Password:     password,
+	}
 
-	if _, exist := usersLoginInfo[token]; exist {
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: models.Response{StatusCode: 1, StatusMsg: "User already exist"},
+	err := GetUserService().Save(newUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
 		})
 	} else {
-		atomic.AddInt64(&userIdSequence, 1)
-		newUser := models.User{
-			CommonEntity: models.NewCommonEntity(),
-			//Id:   userIdSequence,
-			Name: username,
+		token, err1 := models.GenerateToken(username, password, newUser.CommonEntity)
+		if err1 != nil {
+			log.Printf("Can not get the token!")
 		}
-		usersLoginInfo[token] = newUser
-		c.JSON(http.StatusOK, UserLoginResponse{
-			Response: models.Response{StatusCode: 0},
-			UserId:   userIdSequence,
-			Token:    username + password,
-		})
+		err2 := utils.SaveTokenToRedis(newUser.Id, token, time.Duration(config.TokenTTL*float64(time.Second)))
+		if err2 != nil {
+			log.Printf("Fail : Save token in redis !")
+		} else {
+			c.JSON(http.StatusOK, UserLoginResponse{
+				Response: models.Response{StatusCode: 0},
+				UserId:   newUser.Id,
+				Token:    token,
+			})
+		}
 	}
+
 }
 
 func Login(c *gin.Context) {
