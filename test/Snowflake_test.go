@@ -7,6 +7,6 @@ import (
 )
 
 func TestSnowflake(t *testing.T) {
-	sf := utils.NewSnowflake(1)
+	sf := utils.NewSnowflake()
 	fmt.Println(sf.NextID())
 }

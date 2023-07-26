@@ -13,13 +13,16 @@ type Snowflake struct {
 	sequenceID int64 // 序列号部分
 }
 
-// NewSnowflake 函数，返回一个新的 Snowflake 实例
-func NewSnowflake(machineID int64) *Snowflake {
-	return &Snowflake{
-		timestamp:  0,
-		machineID:  machineID,
-		sequenceID: 0,
-	}
+// 饿汉式生成唯一的Snowflake实例
+var snowflake = &Snowflake{
+	timestamp:  0,
+	machineID:  1,
+	sequenceID: 0,
+}
+
+// NewSnowflake 函数，返回一个Snowflake 实例
+func NewSnowflake() *Snowflake {
+	return snowflake
 }
 
 // NextID 方法，使用雪花算法生成下一个唯一的 ID

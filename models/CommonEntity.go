@@ -12,7 +12,7 @@ type CommonEntity struct {
 }
 
 func NewCommonEntity() CommonEntity {
-	sf := utils.NewSnowflake(1)
+	sf := utils.NewSnowflake()
 	return CommonEntity{
 		Id:         sf.NextID(),
 		CreateTime: time.Now(),
