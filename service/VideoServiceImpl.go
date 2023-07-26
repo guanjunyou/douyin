@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/jinzhu/copier"
 )
 
 type VideoServiceImpl struct {
@@ -23,15 +24,22 @@ func (videoService VideoServiceImpl) GetVideoList() ([]models.VideoDVO, error) {
 		if err != nil {
 			return nil, err
 		}
-		VideoDVOList = append(VideoDVOList, models.VideoDVO{
-			CommonEntity:  videolist[i].CommonEntity,
-			Author:        user,
-			PlayUrl:       videolist[i].PlayUrl,
-			CoverUrl:      videolist[i].CoverUrl,
-			FavoriteCount: videolist[i].FavoriteCount,
-			CommentCount:  videolist[i].CommentCount,
-			IsFavorite:    videolist[i].IsFavorite,
-		})
+		var videoDVO models.VideoDVO
+		err1 := copier.Copy(&videoDVO, &videolist[i])
+		if err1 != nil {
+			return nil, err1
+		}
+		videoDVO.Author = user
+		VideoDVOList = append(VideoDVOList, videoDVO)
+		//VideoDVOList = append(VideoDVOList, models.VideoDVO{
+		//	CommonEntity:  videolist[i].CommonEntity,
+		//	Author:        user,
+		//	PlayUrl:       videolist[i].PlayUrl,
+		//	CoverUrl:      videolist[i].CoverUrl,
+		//	FavoriteCount: videolist[i].FavoriteCount,
+		//	CommentCount:  videolist[i].CommentCount,
+		//	IsFavorite:    videolist[i].IsFavorite,
+		//})
 	}
 	return VideoDVOList, nil
 }
