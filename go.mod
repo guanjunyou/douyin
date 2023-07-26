@@ -6,6 +6,7 @@ require (
 	github.com/gavv/httpexpect/v2 v2.8.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/jinzhu/copier v0.3.5
 	github.com/stretchr/testify v1.8.3
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gorm v1.23.3
