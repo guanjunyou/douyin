@@ -7,6 +7,7 @@ import (
 var (
 	DefaultPage = "1"
 	DefaultSize = "20"
+	VideoCount  = 0
 )
 
 var MailPassword = os.Getenv("MailPassword")

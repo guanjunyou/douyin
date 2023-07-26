@@ -31,7 +31,8 @@ func MessageAction(c *gin.Context) {
 
 		atomic.AddInt64(&messageIdSequence, 1)
 		curMessage := models.Message{
-			Id:         messageIdSequence,
+			CommonEntity: models.NewCommonEntity(),
+			//Id:         messageIdSequence,
 			Content:    content,
 			CreateTime: time.Now().Format(time.Kitchen),
 		}

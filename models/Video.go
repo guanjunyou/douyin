@@ -10,3 +10,7 @@ type Video struct {
 	CommentCount  int64  `json:"comment_count,omitempty"`
 	IsFavorite    bool   `json:"is_favorite,omitempty"`
 }
+
+func (table *Video) TableName() string {
+	return "video"
+}

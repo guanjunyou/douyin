@@ -1,6 +1,6 @@
 package models
 
-import "gorm.io/gorm"
+import "github.com/RaymondCode/simple-demo/config"
 
 type User struct {
 	CommonEntity
@@ -12,9 +12,14 @@ type User struct {
 }
 
 func (table *User) TableName() string {
-	return "problem_basic"
+	return "user"
 }
 
-func GetProblemList() *gorm.DB {
-	return nil
+func GetVideoList() ([]Video, error) {
+	videolist := make([]Video, config.VideoCount)
+	result := DB.Where("is_delete != ", 1).Find(&videolist)
+	if result.Error != nil {
+		return videolist, result.Error
+	}
+	return videolist, nil
 }

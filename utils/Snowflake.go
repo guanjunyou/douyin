@@ -22,7 +22,7 @@ func NewSnowflake(machineID int64) *Snowflake {
 	}
 }
 
-// NextID 方法，生成下一个唯一的 ID
+// NextID 方法，使用雪花算法生成下一个唯一的 ID
 func (sf *Snowflake) NextID() int64 {
 	sf.mu.Lock()
 	defer sf.mu.Unlock()
