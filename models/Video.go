@@ -29,26 +29,12 @@ func (table *Video) TableName() string {
 	return "video"
 }
 
-func GetVideoList() ([]VideoDVO, error) {
+// 在 model 层禁止操作除了数据库实体类外的其它类！ 禁止调用其它model或者service!
+func GetVideoList() ([]Video, error) {
 	videolist := make([]Video, config.VideoCount)
-	VideoDVOList := make([]VideoDVO, config.VideoCount)
 	err := DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 	if err != nil {
 		return nil, err
 	}
-	for i := range videolist {
-		userId := videolist[i].AuthorId
-		user, _ := GetUserById(userId)
-		VideoDVOList = append(VideoDVOList, VideoDVO{
-			CommonEntity:  videolist[i].CommonEntity,
-			Author:        user,
-			PlayUrl:       videolist[i].PlayUrl,
-			CoverUrl:      videolist[i].CoverUrl,
-			FavoriteCount: videolist[i].FavoriteCount,
-			CommentCount:  videolist[i].CommentCount,
-			IsFavorite:    videolist[i].IsFavorite,
-		})
-	}
-
-	return VideoDVOList, nil
+	return videolist, nil
 }

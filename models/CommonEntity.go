@@ -8,7 +8,7 @@ import (
 type CommonEntity struct {
 	Id         int64     `json:"id,omitempty"`
 	CreateTime time.Time `json:"create_time,omitempty"`
-	IsDelete   bool      `json:"is_delete"`
+	IsDelete   int64     `json:"is_delete"`
 }
 
 func NewCommonEntity() CommonEntity {
@@ -16,6 +16,6 @@ func NewCommonEntity() CommonEntity {
 	return CommonEntity{
 		Id:         sf.NextID(),
 		CreateTime: time.Now(),
-		IsDelete:   false,
+		IsDelete:   0,
 	}
 }

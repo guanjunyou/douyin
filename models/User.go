@@ -21,6 +21,10 @@ func (table *User) TableName() string {
 
 func GetUserById(Id int64) (User, error) {
 	var user User
-	DB.Where("id = ?", Id).Find(&user)
+	// 传参禁止直接字符串拼接，防止SQL注入
+	err := DB.Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }

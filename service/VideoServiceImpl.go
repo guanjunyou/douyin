@@ -1,18 +1,37 @@
 package service
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
-	"log"
 )
 
 type VideoServiceImpl struct {
+	UserService
 }
 
 func (videoService VideoServiceImpl) GetVideoList() ([]models.VideoDVO, error) {
-	result, err := models.GetVideoList()
+	videolist, err := models.GetVideoList()
+	VideoDVOList := make([]models.VideoDVO, config.VideoCount)
 	if err != nil {
-		log.Printf("方法GetVideoList() 失败 %v", err)
-		return result, err
+		return nil, err
 	}
-	return result, nil
+	for i := range videolist {
+		var userId = videolist[i].AuthorId
+
+		//一定要通过videoService来调用 userSevice
+		user, err := videoService.UserService.GetUserById(userId)
+		if err != nil {
+			return nil, err
+		}
+		VideoDVOList = append(VideoDVOList, models.VideoDVO{
+			CommonEntity:  videolist[i].CommonEntity,
+			Author:        user,
+			PlayUrl:       videolist[i].PlayUrl,
+			CoverUrl:      videolist[i].CoverUrl,
+			FavoriteCount: videolist[i].FavoriteCount,
+			CommentCount:  videolist[i].CommentCount,
+			IsFavorite:    videolist[i].IsFavorite,
+		})
+	}
+	return VideoDVOList, nil
 }

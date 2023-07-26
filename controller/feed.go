@@ -14,8 +14,11 @@ type FeedResponse struct {
 	NextTime  int64             `json:"next_time,omitempty"`
 }
 
+// 拼装 VideoService
 func GetVideoService() service.VideoServiceImpl {
 	var videoService service.VideoServiceImpl
+	var userService service.UserServiceImpl
+	videoService.UserService = userService
 	return videoService
 }
 
