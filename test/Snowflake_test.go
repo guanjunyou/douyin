@@ -7,6 +7,8 @@ import (
 )
 
 func TestSnowflake(t *testing.T) {
-	sf := utils.NewSnowflake()
-	fmt.Println(sf.NextID())
+	for i := 0; i < 1000; i++ {
+		sf := utils.NewSnowflake()
+		fmt.Println(sf.NextID())
+	}
 }
