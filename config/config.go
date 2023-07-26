@@ -8,6 +8,10 @@ var (
 	DefaultPage = "1"
 	DefaultSize = "20"
 	VideoCount  = 0
+
+	// redis
+	TokenTTL float64 = 3600
+	TokenKey string  = "token:"
 )
 
 var MailPassword = os.Getenv("MailPassword")

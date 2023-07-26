@@ -1,5 +1,7 @@
 package models
 
+import "github.com/RaymondCode/simple-demo/utils"
+
 type User struct {
 	CommonEntity
 	//Id            int64  `json:"id,omitempty"`
@@ -22,9 +24,13 @@ func (table *User) TableName() string {
 func GetUserById(Id int64) (User, error) {
 	var user User
 	// 传参禁止直接字符串拼接，防止SQL注入
-	err := DB.Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
+	err := utils.DB.Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
 	if err != nil {
 		return user, err
 	}
 	return user, nil
+}
+
+func SaveUser(user User) error {
+	return utils.DB.Create(&user).Error
 }

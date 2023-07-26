@@ -16,3 +16,7 @@ func (userService UserServiceImpl) GetUserById(Id int64) (models.User, error) {
 	}
 	return result, nil
 }
+
+func (UserService UserServiceImpl) Save(user models.User) error {
+	return models.SaveUser(user)
+}
