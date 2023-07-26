@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/RaymondCode/simple-demo/controller"
 	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,10 +36,15 @@ func initRouter(r *gin.Engine) {
 	apiRouter.POST("/message/action/", controller.MessageAction)
 }
 
+var SF *utils.Snowflake
+
 func main() {
 	go service.RunMessageServer()
 
 	r := gin.Default()
+
+	// 创建一个 Snowflake 实例，并指定机器 ID
+	SF = utils.NewSnowflake(1)
 
 	initRouter(r)
 

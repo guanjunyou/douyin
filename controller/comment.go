@@ -26,7 +26,8 @@ func CommentAction(c *gin.Context) {
 			text := c.Query("comment_text")
 			c.JSON(http.StatusOK, CommentActionResponse{Response: models.Response{StatusCode: 0},
 				Comment: models.Comment{
-					Id:         1,
+					CommonEntity: models.NewCommonEntity(),
+					//Id:         1,
 					User:       user,
 					Content:    text,
 					CreateDate: "05-01",
