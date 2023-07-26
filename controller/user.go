@@ -17,7 +17,6 @@ var usersLoginInfo = map[string]models.User{
 		Name:          "zhanglei",
 		FollowCount:   10,
 		FollowerCount: 5,
-		IsFollow:      true,
 	},
 }
 

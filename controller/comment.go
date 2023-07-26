@@ -44,6 +44,6 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	c.JSON(http.StatusOK, CommentListResponse{
 		Response:    models.Response{StatusCode: 0},
-		CommentList: DemoComments,
+		CommentList: nil,
 	})
 }

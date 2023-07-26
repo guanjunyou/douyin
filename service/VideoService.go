@@ -26,5 +26,5 @@ type VideoService interface {
 
 	// GetVideoList
 
-	GetVideoList() ([]models.Video, error)
+	GetVideoList() ([]models.VideoDVO, error)
 }

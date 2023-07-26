@@ -55,6 +55,6 @@ func PublishList(c *gin.Context) {
 		Response: models.Response{
 			StatusCode: 0,
 		},
-		VideoList: DemoVideos,
+		VideoList: nil,
 	})
 }
