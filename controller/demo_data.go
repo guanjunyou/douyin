@@ -28,7 +28,6 @@ var DemoComments = []models.Comment{
 var DemoUser = models.User{
 	CommonEntity: models.NewCommonEntity(),
 	//Id:            1,
-	Name:          "TestUser",
 	FollowCount:   0,
 	FollowerCount: 0,
 }

@@ -5,8 +5,7 @@ import "github.com/RaymondCode/simple-demo/utils"
 type User struct {
 	CommonEntity
 	//Id            int64  `json:"id,omitempty"`
-	Name          string `json:"name,omitempty"`
-	UserName      string `json:"username,omitempty"`
+	Username      string `json:"username,omitempty"`
 	FollowCount   int64  `json:"follow_count,omitempty"`
 	FollowerCount int64  `json:"follower_count,omitempty"`
 	Phone         string `json:"phone,omitempty"`
@@ -14,7 +13,7 @@ type User struct {
 	Icon          string `json:"icon,omitempty"`
 	Gender        int    `json:"gender,omitempty"`
 	Age           int    `json:"age,omitempty"`
-	NickName      string `json:"nickname,omitempty"`
+	Nickname      string `json:"nickname,omitempty"`
 }
 
 func (table *User) TableName() string {

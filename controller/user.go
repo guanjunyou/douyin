@@ -20,7 +20,6 @@ var usersLoginInfo = map[string]models.User{
 	"zhangleidouyin": {
 		CommonEntity: models.NewCommonEntity(),
 		//Id:            1,
-		Name:          "zhanglei",
 		FollowCount:   10,
 		FollowerCount: 5,
 	},
@@ -56,7 +55,7 @@ func Register(c *gin.Context) {
 	atomic.AddInt64(&userIdSequence, 1)
 	newUser := models.User{
 		CommonEntity: models.NewCommonEntity(),
-		UserName:     username,
+		Username:     username,
 		Password:     password,
 	}
 
