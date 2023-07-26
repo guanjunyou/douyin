@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"sync/atomic"
 )
@@ -36,6 +37,9 @@ type UserResponse struct {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
+	//加密
+	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	password = string(encrypt)
 
 	token := username + password
 
