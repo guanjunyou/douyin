@@ -1,4 +1,4 @@
-package models
+package utils
 
 import (
 	"github.com/RaymondCode/simple-demo/config"
