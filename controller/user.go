@@ -48,6 +48,7 @@ func GetUserService() service.UserServiceImpl {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
+
 	//加密
 	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	password = string(encrypt)

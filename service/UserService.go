@@ -7,9 +7,8 @@ type UserService interface {
 
 	Save(user models.User) error
 
-	//用户注册
-	register(username string, password string)
-	//用户登录
-	login(username string, password string)
-
+	// Register 用户注册
+	Register(username string, password string)
+	// Login 用户登录
+	Login(username string, password string)
 }

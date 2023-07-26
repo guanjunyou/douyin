@@ -7,8 +7,8 @@ require (
 	github.com/gavv/httpexpect/v2 v2.8.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/jinzhu/copier v0.3.5
 	github.com/stretchr/testify v1.8.3
+	golang.org/x/crypto v0.9.0
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gorm v1.23.3
 
@@ -60,7 +60,6 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
