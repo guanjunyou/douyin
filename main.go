@@ -44,7 +44,7 @@ func main() {
 	r := gin.Default()
 
 	// 创建一个 Snowflake 实例，并指定机器 ID
-	SF = utils.NewSnowflake(1)
+	SF = utils.NewSnowflake()
 
 	initRouter(r)
 
