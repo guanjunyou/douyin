@@ -13,4 +13,6 @@ type UserService interface {
 	Save(user models.User) error
 
 	Register(username string, password string, c *gin.Context) error
+
+	Login(username string, password string, c *gin.Context) error
 }
