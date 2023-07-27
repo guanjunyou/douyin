@@ -76,6 +76,7 @@ https://apifox.com/apidoc/shared-09d88f32-0b6c-4157-9d07-a36d32d7a75c/api-507075
 12. 如需提交更改后的数据库禁止删掉之前的数据库文件，以 日期-版本号.sql命名 (如：2023-7-21-v1douyin.sql)
 13. 分支合并之后必须删除GitHub上的分支，每个人在GitHub上最多拥有一个分支
 14. 校验token是否存在且合法使用  utils 包的 AuthAdminCheck 函数
+15. 编写接口时返回的数据一定要按照接口文档要求返回的数据
 
 
 

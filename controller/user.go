@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 // test data: username=zhanglei, password=douyin
 var usersLoginInfo = map[string]models.User{
 	"zhangleidouyin": {
-		CommonEntity: models.NewCommonEntity(),
+		CommonEntity: utils.NewCommonEntity(),
 		//Id:            1,
 		FollowCount:   10,
 		FollowerCount: 5,
@@ -111,15 +112,16 @@ func Login(c *gin.Context) {
 
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
-
-	if user, exist := usersLoginInfo[token]; exist {
+	user, err := GetUserService().UserInfo(token)
+	if err != nil {
+		log.Printf(err.Error())
 		c.JSON(http.StatusOK, UserResponse{
-			Response: models.Response{StatusCode: 0},
-			User:     user,
+			Response: models.Response{StatusCode: 1, StatusMsg: err.Error()},
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"},
+			Response: models.Response{StatusCode: 1},
+			User:     *user,
 		})
 	}
 }

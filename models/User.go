@@ -3,22 +3,22 @@ package models
 import "github.com/RaymondCode/simple-demo/utils"
 
 type User struct {
-	CommonEntity
+	utils.CommonEntity
 	//Id            int64  `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	FollowCount    int64  `json:"follow_count,omitempty"`
-	FollowerCount  int64  `json:"follower_count,omitempty"`
-	Phone          string `json:"phone,omitempty"`
-	Password       string `json:"password,omitempty"`
-	Avatar         string `json:"avatar,omitempty"`
-	Gender         int    `json:"gender,omitempty"`
-	Age            int    `json:"age,omitempty"`
-	Nickname       string `json:"nickname,omitempty"`
-	Signature      string `json:"signature,omitempty"`
-	TotalFavorited int64  `json:"total_favorited,omitempty"`
-	WorkCount      int64  `json:"work_count,omitempty"`
-	FavoriteCount  int64  `json:"favorite_count,omitempty"`
-	IsFollow       bool   `json:"is_follow,omitempty"`
+	Name           string `json:"name"`
+	FollowCount    int64  `json:"follow_count"`
+	FollowerCount  int64  `json:"follower_count"`
+	Phone          string `json:"phone"`
+	Password       string `json:"password"`
+	Avatar         string `json:"avatar"`
+	Gender         int    `json:"gender"`
+	Age            int    `json:"age"`
+	Nickname       string `json:"nickname"`
+	Signature      string `json:"signature"`
+	TotalFavorited int64  `json:"total_favorited"`
+	WorkCount      int64  `json:"work_count"`
+	FavoriteCount  int64  `json:"favorite_count"`
+	IsFollow       bool   `json:"is_follow"`
 }
 
 func (table *User) TableName() string {

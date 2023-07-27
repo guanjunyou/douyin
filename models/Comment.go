@@ -1,7 +1,9 @@
 package models
 
+import "github.com/RaymondCode/simple-demo/utils"
+
 type Comment struct {
-	CommonEntity
+	utils.CommonEntity
 	//Id         int64  `json:"id,omitempty"`
 	User       User   `json:"user"`
 	Content    string `json:"content,omitempty"`
