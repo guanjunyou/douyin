@@ -123,7 +123,7 @@ func UserInfo(c *gin.Context) {
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: models.Response{StatusCode: 1},
+			Response: models.Response{StatusCode: 0},
 			User:     *user,
 		})
 	}

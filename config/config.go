@@ -17,7 +17,7 @@ var (
 var MailPassword = os.Getenv("MailPassword")
 
 // var MysqlDNS = os.Getenv("MysqlDNS")
-var MysqlDNS = "root@tcp(127.0.0.1:3306)"
+var MysqlDNS = "root:1234@tcp(127.0.0.1:3306)"
 
 type ProblemBasic struct {
 	Identity          string      `json:"identity"`           // 问题表的唯一标识
