@@ -17,6 +17,15 @@ func (userService UserServiceImpl) GetUserById(Id int64) (models.User, error) {
 	return result, nil
 }
 
+func (userService UserServiceImpl) GetUserByName(name string) (models.User, error) {
+	result, err := models.GetUserByName(name)
+	if err != nil {
+		log.Printf("方法GetUserById() 失败 %v", err)
+		return result, err
+	}
+	return result, nil
+}
+
 func (userService UserServiceImpl) Save(user models.User) error {
 	return models.SaveUser(user)
 }

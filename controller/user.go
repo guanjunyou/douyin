@@ -52,6 +52,13 @@ func GetUserService() service.UserServiceImpl {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
+	_, errName := GetUserService().GetUserByName(username)
+	if errName == nil {
+		c.JSON(http.StatusBadRequest, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "用户名重复"},
+		})
+		return
+	}
 	//var userRequest UserRequest
 	//if err := c.ShouldBindJSON(&userRequest); err != nil {
 	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

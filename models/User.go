@@ -35,6 +35,16 @@ func GetUserById(Id int64) (User, error) {
 	return user, nil
 }
 
+func GetUserByName(name string) (User, error) {
+	var user User
+	// 传参禁止直接字符串拼接，防止SQL注入
+	err := utils.DB.Where("name = ? AND is_deleted != ?", name, 1).First(&user).Error
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}
+
 func SaveUser(user User) error {
 	return utils.DB.Create(&user).Error
 }
