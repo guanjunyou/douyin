@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -112,7 +113,9 @@ func Login(c *gin.Context) {
 
 func UserInfo(c *gin.Context) {
 	token := c.Query("token")
-	user, err := GetUserService().UserInfo(token)
+	userId := c.Query("user_id")
+	userIdInt, _ := strconv.ParseInt(userId, 10, 64)
+	user, err := GetUserService().UserInfo(userIdInt, token)
 	if err != nil {
 		log.Printf(err.Error())
 		c.JSON(http.StatusOK, UserResponse{

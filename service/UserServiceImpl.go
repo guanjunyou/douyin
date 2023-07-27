@@ -135,12 +135,11 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 	return nil
 }
 
-func (userService UserServiceImpl) UserInfo(token string) (*models.User, error) {
+func (userService UserServiceImpl) UserInfo(userId int64, token string) (*models.User, error) {
 	commonEntity, err := utils.AnalyseToken(token)
 	if err != nil || commonEntity == nil {
 		return nil, errors.New("用户未登录")
 	}
-	userId := commonEntity.Id
 	user, err1 := userService.GetUserById(userId)
 	if err1 != nil {
 		return nil, errors.New("用户不存在！")
