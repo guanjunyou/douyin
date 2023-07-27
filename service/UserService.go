@@ -15,4 +15,6 @@ type UserService interface {
 	Register(username string, password string, c *gin.Context) error
 
 	Login(username string, password string, c *gin.Context) error
+
+	UserInfo(token string) (*models.User, error)
 }

@@ -1,10 +1,13 @@
 package controller
 
-import "github.com/RaymondCode/simple-demo/models"
+import (
+	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
+)
 
 var DemoVideos = []models.Video{
 	{
-		CommonEntity: models.NewCommonEntity(),
+		CommonEntity: utils.NewCommonEntity(),
 		//Id:            1,
 		//Author:        DemoUser,
 		PlayUrl:       "https://www.w3schools.com/html/movie.mp4",
@@ -17,7 +20,7 @@ var DemoVideos = []models.Video{
 
 var DemoComments = []models.Comment{
 	{
-		CommonEntity: models.NewCommonEntity(),
+		CommonEntity: utils.NewCommonEntity(),
 		//Id:         1,
 		User:       DemoUser,
 		Content:    "Test Comment",
@@ -26,7 +29,7 @@ var DemoComments = []models.Comment{
 }
 
 var DemoUser = models.User{
-	CommonEntity: models.NewCommonEntity(),
+	CommonEntity: utils.NewCommonEntity(),
 	//Id:            1,
 	FollowCount:   0,
 	FollowerCount: 0,

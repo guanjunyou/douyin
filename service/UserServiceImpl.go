@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/utils"
@@ -63,7 +64,7 @@ func (userService UserServiceImpl) Register(username string, password string, c 
 
 	atomic.AddInt64(&userIdSequence, 1)
 	newUser := models.User{
-		CommonEntity: models.NewCommonEntity(),
+		CommonEntity: utils.NewCommonEntity(),
 		Name:         username,
 		Password:     password,
 	}
@@ -74,7 +75,7 @@ func (userService UserServiceImpl) Register(username string, password string, c 
 			Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
 		})
 	} else {
-		token, err1 := models.GenerateToken(username, password, newUser.CommonEntity)
+		token, err1 := utils.GenerateToken(username, password, newUser.CommonEntity)
 		if err1 != nil {
 			log.Printf("Can not get the token!")
 		}
@@ -109,7 +110,7 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 		}
 		pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if pwdErr == nil {
-			token, err2 := models.GenerateToken(username, password, user.CommonEntity)
+			token, err2 := utils.GenerateToken(username, password, user.CommonEntity)
 			if err2 != nil {
 				c.JSON(http.StatusInternalServerError, UserLoginResponse{
 					Response: models.Response{StatusCode: 1, StatusMsg: "生成token失败"},
@@ -132,6 +133,19 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 		}
 	}
 	return nil
+}
+
+func (userService UserServiceImpl) UserInfo(token string) (*models.User, error) {
+	commonEntity, err := utils.AnalyseToken(token)
+	if err != nil || commonEntity == nil {
+		return nil, errors.New("用户未登录")
+	}
+	userId := commonEntity.Id
+	user, err1 := userService.GetUserById(userId)
+	if err1 != nil {
+		return nil, errors.New("用户不存在！")
+	}
+	return &user, nil
 }
 
 type UserResponse struct {

@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -31,7 +32,7 @@ func MessageAction(c *gin.Context) {
 
 		atomic.AddInt64(&messageIdSequence, 1)
 		curMessage := models.Message{
-			CommonEntity: models.NewCommonEntity(),
+			CommonEntity: utils.NewCommonEntity(),
 			//Id:         messageIdSequence,
 			Content:    content,
 			CreateTime: time.Now().Format(time.Kitchen),
