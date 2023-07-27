@@ -37,6 +37,10 @@ func (userService UserServiceImpl) Save(user models.User) error {
 	return models.SaveUser(user)
 }
 
+/*
+（
+已完成
+*/
 func (userService UserServiceImpl) Register(username string, password string, c *gin.Context) error {
 	var userIdSequence = int64(1)
 	_, errName := userService.GetUserByName(username)
@@ -82,6 +86,48 @@ func (userService UserServiceImpl) Register(username string, password string, c 
 				Response: models.Response{StatusCode: 0},
 				UserId:   newUser.Id,
 				Token:    token,
+			})
+		}
+	}
+	return nil
+}
+
+/*
+*
+已完成
+*/
+func (userService UserServiceImpl) Login(username string, password string, c *gin.Context) error {
+	_, err := userService.GetUserByName(username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在，请注册!"},
+		})
+	} else {
+		user, err1 := userService.GetUserByName(username)
+		if err1 != nil {
+			return err1
+		}
+		pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+		if pwdErr == nil {
+			token, err2 := models.GenerateToken(username, password, user.CommonEntity)
+			if err2 != nil {
+				c.JSON(http.StatusInternalServerError, UserLoginResponse{
+					Response: models.Response{StatusCode: 1, StatusMsg: "生成token失败"},
+				})
+				return err2
+			}
+			err3 := utils.SaveTokenToRedis(user.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
+			if err3 != nil {
+				log.Printf("Fail : Save token in redis !")
+			}
+			c.JSON(http.StatusOK, UserLoginResponse{
+				Response: models.Response{StatusCode: 0, StatusMsg: "登录成功！"},
+				UserId:   user.Id,
+				Token:    token,
+			})
+		} else {
+			c.JSON(http.StatusOK, UserLoginResponse{
+				Response: models.Response{StatusCode: 1, StatusMsg: "密码错误！"},
 			})
 		}
 	}
