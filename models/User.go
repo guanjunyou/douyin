@@ -14,10 +14,10 @@ type User struct {
 	Gender         int    `json:"gender,omitempty"`
 	Age            int    `json:"age,omitempty"`
 	Nickname       string `json:"nickname,omitempty"`
-	Siganture      string `json:"signature,omitempty"`
-	TotalFavorited string `json:"total_favorited,omitempty"`
-	WorkCount      string `json:"work_count,omitempty"`
-	FavoriteCount  string `json:"favorite_count,omitempty"`
+	Signature      string `json:"signature,omitempty"`
+	TotalFavorited int64  `json:"total_favorited,omitempty"`
+	WorkCount      int64  `json:"work_count,omitempty"`
+	FavoriteCount  int64  `json:"favorite_count,omitempty"`
 	IsFollow       bool   `json:"is_follow,omitempty"`
 }
 

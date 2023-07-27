@@ -38,6 +38,11 @@ type UserResponse struct {
 	User models.User `json:"user"`
 }
 
+type UserRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // 拼装 UserService
 func GetUserService() service.UserServiceImpl {
 	var userService service.UserServiceImpl
@@ -45,8 +50,15 @@ func GetUserService() service.UserServiceImpl {
 }
 
 func Register(c *gin.Context) {
-	username := c.Query("username")
-	password := c.Query("password")
+	//username := c.Query("username")
+	//password := c.Query("password")
+	var userRequest UserRequest
+	if err := c.ShouldBindJSON(&userRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	username := userRequest.Username
+	password := userRequest.Password
 	//加密
 	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	password = string(encrypt)
@@ -68,7 +80,7 @@ func Register(c *gin.Context) {
 		if err1 != nil {
 			log.Printf("Can not get the token!")
 		}
-		err2 := utils.SaveTokenToRedis(newUser.Id, token, time.Duration(config.TokenTTL*float64(time.Second)))
+		err2 := utils.SaveTokenToRedis(newUser.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
 		if err2 != nil {
 			log.Printf("Fail : Save token in redis !")
 		} else {
