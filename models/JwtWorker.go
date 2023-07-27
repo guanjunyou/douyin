@@ -7,7 +7,7 @@ import (
 
 type UserClaims struct {
 	CommonEntity
-	UserName string `json:"username"`
+	Name     string `json:"name"`
 	Password string `json:"password"`
 	//IsAdmin  int    `json:"is_admin"`
 	jwt.StandardClaims
@@ -17,10 +17,10 @@ var myKey = []byte("douyin")
 
 // GenerateToken
 // 生成 token
-func GenerateToken(username, password string, commonEntity CommonEntity) (string, error) {
+func GenerateToken(name, password string, commonEntity CommonEntity) (string, error) {
 	UserClaim := &UserClaims{
 		CommonEntity: commonEntity,
-		UserName:     username,
+		Name:         name,
 		Password:     password,
 		//IsAdmin:        isAdmin,
 		StandardClaims: jwt.StandardClaims{},

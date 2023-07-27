@@ -54,7 +54,7 @@ func Register(c *gin.Context) {
 	atomic.AddInt64(&userIdSequence, 1)
 	newUser := models.User{
 		CommonEntity: models.NewCommonEntity(),
-		Username:     username,
+		Name:         username,
 		Password:     password,
 	}
 
