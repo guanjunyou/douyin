@@ -10,7 +10,7 @@ type User struct {
 	FollowerCount  int64  `json:"follower_count,omitempty"`
 	Phone          string `json:"phone,omitempty"`
 	Password       string `json:"password,omitempty"`
-	Icon           string `json:"icon,omitempty"`
+	Avatar         string `json:"avatar,omitempty"`
 	Gender         int    `json:"gender,omitempty"`
 	Age            int    `json:"age,omitempty"`
 	Nickname       string `json:"nickname,omitempty"`
@@ -18,6 +18,7 @@ type User struct {
 	TotalFavorited string `json:"total_favorited,omitempty"`
 	WorkCount      string `json:"work_count,omitempty"`
 	FavoriteCount  string `json:"favorite_count,omitempty"`
+	IsFollow       bool   `json:"is_follow,omitempty"`
 }
 
 func (table *User) TableName() string {
