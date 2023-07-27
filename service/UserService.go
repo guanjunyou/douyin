@@ -1,6 +1,9 @@
 package service
 
-import "github.com/RaymondCode/simple-demo/models"
+import (
+	"github.com/RaymondCode/simple-demo/models"
+	"github.com/gin-gonic/gin"
+)
 
 type UserService interface {
 	GetUserById(Id int64) (models.User, error)
@@ -8,4 +11,6 @@ type UserService interface {
 	GetUserByName(name string) (models.User, error)
 
 	Save(user models.User) error
+
+	Register(username string, password string, c *gin.Context) error
 }
