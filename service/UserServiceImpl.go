@@ -1,8 +1,15 @@
 package service
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"log"
+	"net/http"
+	"sync/atomic"
+	"time"
 )
 
 type UserServiceImpl struct {
@@ -28,4 +35,71 @@ func (userService UserServiceImpl) GetUserByName(name string) (models.User, erro
 
 func (userService UserServiceImpl) Save(user models.User) error {
 	return models.SaveUser(user)
+}
+
+func (userService UserServiceImpl) Register(username string, password string, c *gin.Context) error {
+	var userIdSequence = int64(1)
+	_, errName := userService.GetUserByName(username)
+	if errName == nil {
+		c.JSON(http.StatusBadRequest, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "用户名重复"},
+		})
+		return nil
+	}
+	//var userRequest UserRequest
+	//if err := c.ShouldBindJSON(&userRequest); err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//	return
+	//}
+	//username := userRequest.Username
+	//password := userRequest.Password
+	//加密
+	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	password = string(encrypt)
+
+	atomic.AddInt64(&userIdSequence, 1)
+	newUser := models.User{
+		CommonEntity: models.NewCommonEntity(),
+		Name:         username,
+		Password:     password,
+	}
+
+	err := userService.Save(newUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
+		})
+	} else {
+		token, err1 := models.GenerateToken(username, password, newUser.CommonEntity)
+		if err1 != nil {
+			log.Printf("Can not get the token!")
+		}
+		err2 := utils.SaveTokenToRedis(newUser.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
+		if err2 != nil {
+			log.Printf("Fail : Save token in redis !")
+		} else {
+			c.JSON(http.StatusOK, UserLoginResponse{
+				Response: models.Response{StatusCode: 0},
+				UserId:   newUser.Id,
+				Token:    token,
+			})
+		}
+	}
+	return nil
+}
+
+type UserResponse struct {
+	models.Response
+	User models.User `json:"user"`
+}
+
+type UserRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserLoginResponse struct {
+	models.Response
+	UserId int64  `json:"user_id,omitempty"`
+	Token  string `json:"token"`
 }

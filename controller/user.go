@@ -1,16 +1,11 @@
 package controller
 
 import (
-	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/service"
-	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
-	"sync/atomic"
-	"time"
 )
 
 // usersLoginInfo use map to store user info, and key is username+password for demo
@@ -52,51 +47,55 @@ func GetUserService() service.UserServiceImpl {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-	_, errName := GetUserService().GetUserByName(username)
-	if errName == nil {
-		c.JSON(http.StatusBadRequest, UserLoginResponse{
-			Response: models.Response{StatusCode: 1, StatusMsg: "用户名重复"},
-		})
-		return
-	}
-	//var userRequest UserRequest
-	//if err := c.ShouldBindJSON(&userRequest); err != nil {
-	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//_, errName := GetUserService().GetUserByName(username)
+	//if errName == nil {
+	//	c.JSON(http.StatusBadRequest, UserLoginResponse{
+	//		Response: models.Response{StatusCode: 1, StatusMsg: "用户名重复"},
+	//	})
 	//	return
 	//}
-	//username := userRequest.Username
-	//password := userRequest.Password
-	//加密
-	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	password = string(encrypt)
-
-	atomic.AddInt64(&userIdSequence, 1)
-	newUser := models.User{
-		CommonEntity: models.NewCommonEntity(),
-		Name:         username,
-		Password:     password,
-	}
-
-	err := GetUserService().Save(newUser)
+	////var userRequest UserRequest
+	////if err := c.ShouldBindJSON(&userRequest); err != nil {
+	////	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	////	return
+	////}
+	////username := userRequest.Username
+	////password := userRequest.Password
+	////加密
+	//encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	//password = string(encrypt)
+	//
+	//atomic.AddInt64(&userIdSequence, 1)
+	//newUser := models.User{
+	//	CommonEntity: models.NewCommonEntity(),
+	//	Name:         username,
+	//	Password:     password,
+	//}
+	//
+	//err := GetUserService().Save(newUser)
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, UserLoginResponse{
+	//		Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
+	//	})
+	//} else {
+	//	token, err1 := models.GenerateToken(username, password, newUser.CommonEntity)
+	//	if err1 != nil {
+	//		log.Printf("Can not get the token!")
+	//	}
+	//	err2 := utils.SaveTokenToRedis(newUser.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
+	//	if err2 != nil {
+	//		log.Printf("Fail : Save token in redis !")
+	//	} else {
+	//		c.JSON(http.StatusOK, UserLoginResponse{
+	//			Response: models.Response{StatusCode: 0},
+	//			UserId:   newUser.Id,
+	//			Token:    token,
+	//		})
+	//	}
+	//}
+	err := GetUserService().Register(username, password, c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, UserLoginResponse{
-			Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
-		})
-	} else {
-		token, err1 := models.GenerateToken(username, password, newUser.CommonEntity)
-		if err1 != nil {
-			log.Printf("Can not get the token!")
-		}
-		err2 := utils.SaveTokenToRedis(newUser.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
-		if err2 != nil {
-			log.Printf("Fail : Save token in redis !")
-		} else {
-			c.JSON(http.StatusOK, UserLoginResponse{
-				Response: models.Response{StatusCode: 0},
-				UserId:   newUser.Id,
-				Token:    token,
-			})
-		}
+		log.Printf("Register Error!")
 	}
 
 }
