@@ -50,15 +50,15 @@ func GetUserService() service.UserServiceImpl {
 }
 
 func Register(c *gin.Context) {
-	//username := c.Query("username")
-	//password := c.Query("password")
-	var userRequest UserRequest
-	if err := c.ShouldBindJSON(&userRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	username := userRequest.Username
-	password := userRequest.Password
+	username := c.Query("username")
+	password := c.Query("password")
+	//var userRequest UserRequest
+	//if err := c.ShouldBindJSON(&userRequest); err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//	return
+	//}
+	//username := userRequest.Username
+	//password := userRequest.Password
 	//加密
 	encrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	password = string(encrypt)
