@@ -6,7 +6,7 @@ import (
 )
 
 type Video struct {
-	CommonEntity
+	utils.CommonEntity
 	//Id            int64  `json:"id,omitempty"`
 	AuthorId      int64  `json:"author_id"`
 	PlayUrl       string `json:"play_url" json:"play_url,omitempty"`
@@ -18,7 +18,7 @@ type Video struct {
 }
 
 type VideoDVO struct {
-	CommonEntity
+	utils.CommonEntity
 	Author        User   `json:"author"`
 	PlayUrl       string `json:"play_url"`
 	CoverUrl      string `json:"cover_url"`

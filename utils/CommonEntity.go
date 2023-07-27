@@ -1,7 +1,6 @@
-package models
+package utils
 
 import (
-	"github.com/RaymondCode/simple-demo/utils"
 	"time"
 )
 
@@ -12,7 +11,7 @@ type CommonEntity struct {
 }
 
 func NewCommonEntity() CommonEntity {
-	sf := utils.NewSnowflake()
+	sf := NewSnowflake()
 	return CommonEntity{
 		Id:         sf.NextID(),
 		CreateTime: time.Now(),

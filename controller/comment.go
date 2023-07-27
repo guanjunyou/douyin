@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -26,7 +27,7 @@ func CommentAction(c *gin.Context) {
 			text := c.Query("comment_text")
 			c.JSON(http.StatusOK, CommentActionResponse{Response: models.Response{StatusCode: 0},
 				Comment: models.Comment{
-					CommonEntity: models.NewCommonEntity(),
+					CommonEntity: utils.NewCommonEntity(),
 					//Id:         1,
 					User:       user,
 					Content:    text,
