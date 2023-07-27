@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-func SaveTokenToRedis(userID string, token string, expiration time.Duration) error {
+func SaveTokenToRedis(username string, token string, expiration time.Duration) error {
 	client := InitRedisDB()
 	ctx := context.Background()
-	key := fmt.Sprintf("%v%v", config.TokenKey, userID)
+	key := fmt.Sprintf("%v%v", config.TokenKey, username)
 
 	err := client.Set(ctx, key, token, expiration).Err()
 	if err != nil {
@@ -21,9 +21,9 @@ func SaveTokenToRedis(userID string, token string, expiration time.Duration) err
 	return nil
 }
 
-func GetTokenFromRedis(client *redis.Client, userID string) (string, error) {
+func GetTokenFromRedis(client *redis.Client, username string) (string, error) {
 	ctx := context.Background()
-	key := fmt.Sprintf("%v%v", config.TokenKey, userID)
+	key := fmt.Sprintf("%v%v", config.TokenKey, username)
 
 	token, err := client.Get(ctx, key).Result()
 	if err != nil {
