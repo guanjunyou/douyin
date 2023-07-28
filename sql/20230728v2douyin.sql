@@ -11,7 +11,7 @@
  Target Server Version : 50714 (5.7.14)
  File Encoding         : 65001
 
- Date: 28/07/2023 12:35:23
+ Date: 28/07/2023 17:13:33
 */
 
 SET NAMES utf8mb4;
@@ -26,7 +26,7 @@ CREATE TABLE `comment`  (
   `user_id` bigint(64) NOT NULL COMMENT '评论用户的id',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论内容',
   `video_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '评论的视频id',
-  `create_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `create_date` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `is_deleted` int(1) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;

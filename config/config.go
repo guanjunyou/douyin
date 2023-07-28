@@ -38,7 +38,7 @@ var RedisConfig = &redis.Options{
 
 //var MysqlDNS = "root@tcp(127.0.0.1:3306)"
 
-var MysqlDNS = strings.Join([]string{userName, ":", password, "@tcp(", ip, ":", port, ")/", dbName, "?charset=utf8mb4&parseTime=True"}, "")
+var MysqlDNS = strings.Join([]string{userName, "@tcp(", ip, ":", port, ")/", dbName, "?charset=utf8mb4&parseTime=True"}, "")
 
 type ProblemBasic struct {
 	Identity          string      `json:"identity"`           // 问题表的唯一标识
