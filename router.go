@@ -32,4 +32,5 @@ func initRouter1(r *gin.Engine) {
 	apiRouter.GET("/relation/friend/list/", controller.FriendList)
 	apiRouter.GET("/message/chat/", controller.MessageChat)
 	apiRouter.POST("/message/action/", controller.MessageAction)
+
 }

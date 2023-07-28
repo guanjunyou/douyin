@@ -1,4 +1,4 @@
-package service
+package impl
 
 import (
 	"errors"
@@ -136,10 +136,10 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 }
 
 func (userService UserServiceImpl) UserInfo(userId int64, token string) (*models.User, error) {
-	commonEntity, err := utils.AnalyseToken(token)
-	if err != nil || commonEntity == nil {
-		return nil, errors.New("用户未登录")
-	}
+	//userClaims, err := utils.AnalyseToken(token)
+	//if err != nil || userClaims == nil {
+	//	return nil, errors.New("用户未登录")
+	//}
 	user, err1 := userService.GetUserById(userId)
 	if err1 != nil {
 		return nil, errors.New("用户不存在！")

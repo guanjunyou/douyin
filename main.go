@@ -42,10 +42,10 @@ func main() {
 	go service.RunMessageServer()
 
 	r := gin.Default()
-
+	r.Use(utils.RefreshHandler())
+	r.Use(utils.AuthAdminCheck())
 	// 创建一个 Snowflake 实例，并指定机器 ID
 	SF = utils.NewSnowflake()
-
 	initRouter(r)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")

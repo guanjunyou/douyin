@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/RaymondCode/simple-demo/models"
-	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -15,9 +15,9 @@ type FeedResponse struct {
 }
 
 // 拼装 VideoService
-func GetVideoService() service.VideoServiceImpl {
-	var videoService service.VideoServiceImpl
-	var userService service.UserServiceImpl
+func GetVideoService() impl.VideoServiceImpl {
+	var videoService impl.VideoServiceImpl
+	var userService impl.UserServiceImpl
 	videoService.UserService = userService
 	return videoService
 }

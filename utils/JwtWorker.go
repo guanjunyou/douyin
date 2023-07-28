@@ -35,7 +35,7 @@ func GenerateToken(name, password string, commonEntity CommonEntity) (string, er
 
 // AnalyseToken
 // 解析 token
-func AnalyseToken(tokenString string) (*CommonEntity, error) {
+func AnalyseToken(tokenString string) (*UserClaims, error) {
 	userClaim := new(UserClaims)
 	claims, err := jwt.ParseWithClaims(tokenString, userClaim, func(token *jwt.Token) (interface{}, error) {
 		return myKey, nil
@@ -46,5 +46,5 @@ func AnalyseToken(tokenString string) (*CommonEntity, error) {
 	if !claims.Valid {
 		return nil, fmt.Errorf("analyse Token Error:%v", err)
 	}
-	return &userClaim.CommonEntity, nil
+	return userClaim, nil
 }
