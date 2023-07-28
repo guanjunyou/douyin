@@ -22,6 +22,10 @@ func RefreshHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//1.获取token
 		token := c.Query("token")
+		//如果token为空则尝试从body中拿
+		if token == "" {
+			token = c.PostForm("token")
+		}
 		//2.判断是否携带token
 		if token == "" {
 			return
@@ -39,7 +43,7 @@ func RefreshHandler() gin.HandlerFunc {
 		//6.刷新token的有效期
 		err = RefreshToken(userClaims.Name, time.Duration(config.TokenTTL*float64(time.Second)))
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"status": -1, "msg": err.Error()})
+			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			return
 		}
 		c.Next()
@@ -60,9 +64,13 @@ func AuthAdminCheck() gin.HandlerFunc {
 		}
 		//2.获取token
 		token := c.Query("token")
+		//如果token为空则尝试从body中拿
+		if token == "" {
+			token = c.PostForm("token")
+		}
 		userClaims, err := AnalyseToken(token)
 		if err != nil || userClaims == nil || userClaims.IsDeleted == 1 {
-			c.JSON(http.StatusForbidden, gin.H{"status": -1, "msg": "该用户未登录，无权限访问"})
+			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			//阻止该请求
 			c.Abort()
 			return
@@ -70,7 +78,7 @@ func AuthAdminCheck() gin.HandlerFunc {
 		//3.根据token查redis
 		tokenFromRedis, err := GetTokenFromRedis(userClaims.Name)
 		if tokenFromRedis == "" || err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"status": -1, "msg": "该用户未登录，无权限访问"})
+			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			//阻止该请求
 			c.Abort()
 			return
