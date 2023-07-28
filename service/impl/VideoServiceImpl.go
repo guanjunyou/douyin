@@ -1,12 +1,13 @@
-package service
+package impl
 
 import (
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/service"
 )
 
 type VideoServiceImpl struct {
-	UserService
+	service.UserService
 }
 
 func (videoService VideoServiceImpl) GetVideoList() ([]models.VideoDVO, error) {
