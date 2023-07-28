@@ -22,9 +22,8 @@ var DemoComments = []models.Comment{
 	{
 		CommonEntity: utils.NewCommonEntity(),
 		//Id:         1,
-		User:       DemoUser,
-		Content:    "Test Comment",
-		CreateDate: "05-01",
+		User:    DemoUser,
+		Content: "Test Comment",
 	},
 }
 
