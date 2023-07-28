@@ -29,5 +29,5 @@ type VideoService interface {
 	GetVideoIdList(userId int64) ([]int64, error)
 
 	// GetVideoList
-	GetVideoList() ([]models.VideoDVO, error)
+	GetVideoListByLastTime(latestTime time.Time) ([]models.VideoDVO, time.Time, error)
 }
