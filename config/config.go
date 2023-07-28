@@ -23,7 +23,7 @@ var MailPassword = os.Getenv("MailPassword")
 // MySQL数据库配置
 const (
 	userName = "root"
-	password = "123123" // 更改成自己密码之后请不要提交自己的密码
+	password = "123456" // 更改成自己密码之后请不要提交自己的密码
 	ip       = "127.0.0.1"
 	port     = "3306"
 	dbName   = "douyin"

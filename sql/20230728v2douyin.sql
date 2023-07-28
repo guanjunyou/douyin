@@ -138,7 +138,7 @@ CREATE TABLE `user`  (
   `is_deleted` int(1) NULL DEFAULT NULL,
   `nickname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '昵称',
   `signature` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '个人简介',
-  `total_favorite` int(22) NULL DEFAULT NULL COMMENT '获赞数量',
+  `total_favorited` int(22) NULL DEFAULT NULL COMMENT '获赞数量',
   `work_count` int(22) NULL DEFAULT NULL COMMENT '作品数',
   `favorite_count` int(22) NULL DEFAULT NULL COMMENT '喜欢数',
   `is_follow` int(11) NULL DEFAULT NULL COMMENT '是否关注',
