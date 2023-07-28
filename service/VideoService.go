@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/gin-gonic/gin"
 	"mime/multipart"
 	"time"
 )
@@ -18,7 +19,7 @@ type VideoService interface {
 	// Publish
 	// 将传入的视频流保存在文件服务器中，并存储在mysql表中
 	// 5.23 加入title
-	Publish(data *multipart.FileHeader, userId int64, title string) error
+	Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error
 
 	// List
 	// 通过userId来查询对应用户发布的视频，并返回对应的视频切片数组

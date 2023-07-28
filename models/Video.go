@@ -41,3 +41,8 @@ func GetVideoList() ([]Video, error) {
 	}
 	return videolist, nil
 }
+
+func SaveVedio(video *Video) error {
+	err := utils.DB.Create(video).Error
+	return err
+}
