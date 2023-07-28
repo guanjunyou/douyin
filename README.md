@@ -1,5 +1,5 @@
 #  抖音简易后端
-### 字节跳动青训营 GOGOG 队项目
+### 字节跳动青训营 GOGOG O队项目
 
 ## 前期准备进度
 by 关竣佑 谢声儒
@@ -87,6 +87,8 @@ https://apifox.com/apidoc/shared-09d88f32-0b6c-4157-9d07-a36d32d7a75c/api-507075
 ​	2.合并分支解决冲突的时候如遇不理解的问题及时提出
 
 3. 开发一个函数后，建议在 test 包下编写测试代码进行测试
+3. 如果业务操作间没有太多的关联，建议开启协程，使用 channel 通信。
+3. 创建切片数组前，如果能估计大小，建议预先设置好大小，减少后期扩容开销
 
 
 
@@ -96,27 +98,27 @@ https://apifox.com/apidoc/shared-09d88f32-0b6c-4157-9d07-a36d32d7a75c/api-507075
 
 # 接口基本思路
 
-## 互动交口
+## 互动接口
 
-### 赞操作
+### 赞操作   （王奕丹）
 
 URL：**POST****/douyin/favorite/action/**
 
 基本思路：主要操控like表，当action_type=1时写入对应的一条点赞关系记录，反之则删除
 
-### 喜欢列表
+### 喜欢列表（王奕丹）
 
 URL:  **GET****/douyin/favorite/list/**
 
 基本思路：主要操控like表、user表和veido表，查出用户所喜欢的所有视频id，根据视频id进一步查询作者信息、视频信息，具体字段需求查看api文档，建议封装成DTO类
 
-### 评论操作
+### 评论操作  （邱祥凯）
 
 URL: **POST****/douyin/comment/action/**
 
 基本思路：主要操控comment表，将对应的评论信息添加到数据库中即可。
 
-### 评论列表
+### 评论列表（邱祥凯）
 
 URL: **GET****/douyin/comment/list/**
 
@@ -124,37 +126,37 @@ URL: **GET****/douyin/comment/list/**
 
 ## 社交接口
 
-### 关注操作
+### 关注操作（杨伟宁）
 
 URL: **POST****/douyin/relation/action/**
 
 基本思路：与点赞操作类似，只是操控的数据表变成follo表
 
-### 关注列表
+### 关注列表（杨伟宁）
 
 URL: **GET****/douyin/relation/follow/list/**
 
 基本思路：根据请求中的user_id联合查询follow表和user表，返回对应的关注用户信息集合
 
-### 粉丝列表
+### 粉丝列表（杨伟宁）
 
 URL: **GET****/douyin/relation/follow/list/**
 
 基本思路：与关注列表其实逻辑类似的,操控表也一样
 
-### 好友列表
+### 好友列表（杨伟宁）
 
 URL: **GET****/douyin/relation/friend/list/**
 
 基本思路：根据现在的抖音的定义，只有两个用户相互关注才是好友，那么我们就可以先查询当前用户的关注列表，对列表中的每个用户判断其是否也关注了当前用户，将不符合条件的用户过滤。最后得到的列表就是好友列表
 
-### 发送消息
+### 发送消息（邱祥凯）
 
 URL: **POST****/douyin/message/action/**
 
 基本思路：逻辑很简单，我们只需要将记录 存入3张表：message、message_push_event、message_send_event
 
-### 聊天记录
+### 聊天记录  （邱祥凯）
 
 URL: **GET****/douyin/message/chat/**
 
