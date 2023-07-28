@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/RaymondCode/simple-demo/controller"
-	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +39,7 @@ func initRouter(r *gin.Engine) {
 var SF *utils.Snowflake
 
 func main() {
-	go service.RunMessageServer()
+	go impl.RunMessageServer()
 
 	r := gin.Default()
 

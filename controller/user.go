@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/RaymondCode/simple-demo/models"
-	"github.com/RaymondCode/simple-demo/service"
+	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -41,8 +41,8 @@ type UserRequest struct {
 }
 
 // 拼装 UserService
-func GetUserService() service.UserServiceImpl {
-	var userService service.UserServiceImpl
+func GetUserService() impl.UserServiceImpl {
+	var userService impl.UserServiceImpl
 	return userService
 }
 
