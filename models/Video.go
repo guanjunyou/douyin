@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/utils"
+	"time"
 )
 
 type Video struct {
@@ -33,9 +34,9 @@ func (table *Video) TableName() string {
 }
 
 // 在 model 层禁止操作除了数据库实体类外的其它类！ 禁止调用其它model或者service!
-func GetVideoList() ([]Video, error) {
+func GetVideoListByLastTime(latestTime time.Time) ([]Video, error) {
 	videolist := make([]Video, config.VideoCount)
-	err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
+	err := utils.DB.Where("is_deleted != ? AND create_date < ? ", 1, latestTime).Order("create_date desc").Limit(config.VideoCount).Find(&videolist).Error
 	if err != nil {
 		return nil, err
 	}
