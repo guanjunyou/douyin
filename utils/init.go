@@ -13,8 +13,7 @@ var DB = Init()
 var RDB = InitRedisDB()
 
 func Init() *gorm.DB {
-	dsn := config.MysqlDNS + "/douyin?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(config.MysqlDNS), &gorm.Config{})
 	if err != nil {
 		log.Println("gorm Init Error : ", err)
 	}
@@ -22,9 +21,5 @@ func Init() *gorm.DB {
 }
 
 func InitRedisDB() *redis.Client {
-	return redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	return redis.NewClient(config.RedisConfig)
 }
