@@ -35,6 +35,11 @@ func SaveComment(commentDB *CommentDB) error {
 	return utils.DB.Create(commentDB).Error
 }
 
+func DeleteComment(commentId int64) error {
+	//set is_deleted = 1
+	return utils.DB.Model(&CommentDB{}).Where("id = ?", commentId).Update("is_deleted", 1).Error
+}
+
 func GetCommentByVideoId(videoId int64) []Comment {
 	var comments []Comment
 	var commentDBs []CommentDB

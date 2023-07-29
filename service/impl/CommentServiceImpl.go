@@ -25,3 +25,7 @@ func (commentService CommentServiceImpl) CommentList(vedioId int64) []models.Com
 	Comments := models.GetCommentByVideoId(vedioId)
 	return Comments
 }
+
+func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
+	return models.DeleteComment(commentId)
+}
