@@ -28,7 +28,7 @@ func FollowList(c *gin.Context) {
 		Response: models.Response{
 			StatusCode: 0,
 		},
-		UserList: []models.User{DemoUser},
+		UserList: []models.User{},
 	})
 }
 
@@ -38,7 +38,7 @@ func FollowerList(c *gin.Context) {
 		Response: models.Response{
 			StatusCode: 0,
 		},
-		UserList: []models.User{DemoUser},
+		UserList: []models.User{},
 	})
 }
 
@@ -48,6 +48,6 @@ func FriendList(c *gin.Context) {
 		Response: models.Response{
 			StatusCode: 0,
 		},
-		UserList: []models.User{DemoUser},
+		UserList: []models.User{},
 	})
 }
