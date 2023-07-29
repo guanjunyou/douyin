@@ -21,9 +21,9 @@ type VideoService interface {
 	// 5.23 加入title
 	Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error
 
-	// List
+	// PublishList
 	// 通过userId来查询对应用户发布的视频，并返回对应的视频切片数组
-	List(userId int64, curId int64) ([]models.Video, error)
+	PublishList(userId int64) ([]models.VideoDVO, error)
 
 	// GetVideoIdList
 	// 通过一个作者id，返回该用户发布的视频id切片数组

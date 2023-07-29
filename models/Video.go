@@ -47,3 +47,13 @@ func SaveVedio(video *Video) error {
 	err := utils.DB.Create(video).Error
 	return err
 }
+
+// GetVediosByUserId 根据用户id查询发布的视频
+func GetVediosByUserId(userId int64) ([]Video, error) {
+	vedios := make([]Video, config.VideoCount)
+	err := utils.DB.Where("author_id = ? AND is_deleted != ?", userId, 1).Find(&vedios).Error
+	if err != nil {
+		return nil, err
+	}
+	return vedios, nil
+}

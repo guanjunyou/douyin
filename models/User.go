@@ -1,6 +1,8 @@
 package models
 
-import "github.com/RaymondCode/simple-demo/utils"
+import (
+	"github.com/RaymondCode/simple-demo/utils"
+)
 
 type User struct {
 	utils.CommonEntity
@@ -48,4 +50,8 @@ func GetUserByName(name string) (User, error) {
 
 func SaveUser(user User) error {
 	return utils.DB.Create(&user).Error
+}
+
+func UpdateUser(user User) {
+	utils.DB.Save(&user)
 }
