@@ -58,6 +58,8 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 // Publish 投稿接口
 // TODO 借助redis协助实现feed流
 func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error {
+	//从title中过滤敏感词汇
+	replaceTitle := utils.Filter.Replace(title, '#')
 	//文件名
 	filename := filepath.Base(data.Filename)
 	//将文件名拼接用户id
@@ -70,7 +72,7 @@ func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Cont
 		AuthorId:     userId,
 		PlayUrl:      saveFile,
 		CoverUrl:     "",
-		Title:        title,
+		Title:        replaceTitle,
 	}
 	err := models.SaveVedio(&video)
 	if err != nil {
