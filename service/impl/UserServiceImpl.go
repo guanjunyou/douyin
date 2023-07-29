@@ -98,40 +98,51 @@ func (userService UserServiceImpl) Register(username string, password string, c 
 已完成
 */
 func (userService UserServiceImpl) Login(username string, password string, c *gin.Context) error {
+
 	_, err := userService.GetUserByName(username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, UserLoginResponse{
 			Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在，请注册!"},
 		})
-	} else {
-		user, err1 := userService.GetUserByName(username)
-		if err1 != nil {
-			return err1
-		}
-		pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-		if pwdErr == nil {
-			token, err2 := utils.GenerateToken(username, password, user.CommonEntity)
-			if err2 != nil {
-				c.JSON(http.StatusInternalServerError, UserLoginResponse{
-					Response: models.Response{StatusCode: 1, StatusMsg: "生成token失败"},
-				})
-				return err2
-			}
-			err3 := utils.SaveTokenToRedis(user.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
-			if err3 != nil {
-				log.Printf("Fail : Save token in redis !")
-			}
-			c.JSON(http.StatusOK, UserLoginResponse{
-				Response: models.Response{StatusCode: 0, StatusMsg: "登录成功！"},
-				UserId:   user.Id,
-				Token:    token,
-			})
-		} else {
-			c.JSON(http.StatusOK, UserLoginResponse{
-				Response: models.Response{StatusCode: 1, StatusMsg: "密码错误！"},
-			})
-		}
+		return nil
 	}
+
+	user, err1 := userService.GetUserByName(username)
+	if err1 != nil {
+		return err1
+	}
+
+	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if pwdErr != nil {
+		c.JSON(http.StatusOK, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "密码错误！"},
+		})
+		return pwdErr
+	}
+
+	token, err2 := utils.GenerateToken(username, password, user.CommonEntity)
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "生成token失败"},
+		})
+		return err2
+	}
+
+	err3 := utils.SaveTokenToRedis(user.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
+	if err3 != nil {
+		log.Printf("Fail : Save token in redis !")
+		// TODO 开发完成后整理这个返回体 返回信息不能这么填
+		c.JSON(http.StatusInternalServerError, UserLoginResponse{
+			Response: models.Response{StatusCode: 1, StatusMsg: "无法保存token 请检查redis连接"},
+		})
+		return err3
+	}
+
+	c.JSON(http.StatusOK, UserLoginResponse{
+		Response: models.Response{StatusCode: 0, StatusMsg: "登录成功！"},
+		UserId:   user.Id,
+		Token:    token,
+	})
 	return nil
 }
 

@@ -12,6 +12,9 @@ var (
 	// redis
 	TokenTTL float64 = 3600
 	TokenKey string  = "token:"
+
+	//filter
+	WordDictPath = "../public/sensitiveDict.txt"
 )
 
 var MailPassword = os.Getenv("MailPassword")
