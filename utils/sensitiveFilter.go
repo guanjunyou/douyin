@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/importcjj/sensitive"
 	"log"
 )
@@ -11,11 +12,9 @@ import (
 */
 var Filter *sensitive.Filter
 
-const WordDictPath = "./public/sensitiveDict.txt"
-
 func InitFilter() {
 	Filter = sensitive.New()
-	err := Filter.LoadWordDict(WordDictPath)
+	err := Filter.LoadWordDict(config.WordDictPath)
 	if err != nil {
 		log.Println("InitFilter Fail,Err=" + err.Error())
 	}
