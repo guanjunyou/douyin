@@ -9,6 +9,20 @@ type Comment struct {
 	Content string `json:"content,omitempty"`
 }
 
+type ByCreateDate []Comment
+
+func (a ByCreateDate) Len() int {
+	return len(a)
+}
+
+func (a ByCreateDate) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a ByCreateDate) Less(i, j int) bool {
+	return a[i].CreateDate.Compare(a[j].CreateDate) > 0
+}
+
 // CommentDB是数据库储存的Entity
 type CommentDB struct {
 	utils.CommonEntity
@@ -32,12 +46,12 @@ func (commentDB *CommentDB) TableName() string {
 }
 
 func SaveComment(commentDB *CommentDB) error {
-	return utils.DB.Create(commentDB).Error
+	return utils.GetMysqlDB().Create(commentDB).Error
 }
 
 func DeleteComment(commentId int64) error {
 	//set is_deleted = 1
-	return utils.DB.Model(&CommentDB{}).Where("id = ?", commentId).Update("is_deleted", 1).Error
+	return utils.GetMysqlDB().Model(&CommentDB{}).Where("id = ?", commentId).Update("is_deleted", 1).Error
 }
 
 func GetCommentByVideoId(videoId int64) []Comment {
@@ -47,14 +61,14 @@ func GetCommentByVideoId(videoId int64) []Comment {
 	GetUser := func(Id int64) (User, error) {
 		var user User
 
-		err := utils.DB.Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
+		err := utils.GetMysqlDB().Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
 		if err != nil {
 			return user, err
 		}
 		return user, nil
 	}
 
-	err := utils.DB.Where("video_id = ? AND is_deleted != ?", videoId, 1).Find(&commentDBs).Error
+	err := utils.GetMysqlDB().Where("video_id = ? AND is_deleted != ?", videoId, 1).Find(&commentDBs).Error
 	if err != nil {
 		return comments
 	}
