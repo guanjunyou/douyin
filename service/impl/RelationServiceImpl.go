@@ -1,5 +1,7 @@
 package impl
 
+import "github.com/RaymondCode/simple-demo/models"
+
 type RelationServiceImpl struct {
 }
 
@@ -9,16 +11,16 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 }
 
 // GetFollows 查询关注列表
-func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) error {
-	return nil
+func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]models.User, error) {
+	return nil, nil
 }
 
 // GetFollowers 查询粉丝列表
-func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) error {
-	return nil
+func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]models.User, error) {
+	return nil, nil
 }
 
 // GetFriends 查询好友列表
-func (relationServiceImpl RelationServiceImpl) GetFriends(usrId int64) error {
-	return nil
+func (relationServiceImpl RelationServiceImpl) GetFriends(usrId int64) ([]models.User, error) {
+	return nil, nil
 }
