@@ -76,7 +76,7 @@ func CommentAction(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, CommentActionResponse{Response: models.Response{StatusCode: 0, StatusMsg: "Comment success"},
+		c.JSON(http.StatusOK, CommentActionResponse{Response: models.Response{StatusCode: 0, StatusMsg: ""},
 			Comment: comment})
 		return
 	} else if actionType == "2" {
@@ -87,7 +87,7 @@ func CommentAction(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, models.Response{StatusCode: 1, StatusMsg: "Delete comment failed"})
 			return
 		}
-		c.JSON(http.StatusOK, models.Response{StatusCode: 0, StatusMsg: "Delete comment success"})
+		c.JSON(http.StatusOK, models.Response{StatusCode: 0})
 		return
 	}
 	c.JSON(http.StatusOK, models.Response{StatusCode: 0})
