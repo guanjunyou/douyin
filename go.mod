@@ -12,6 +12,7 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/stretchr/testify v1.8.3
 	golang.org/x/crypto v0.9.0
+	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gorm v1.23.3
 
