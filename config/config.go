@@ -69,7 +69,7 @@ var (
 
 // 首字母大写其他的包才能调用
 func ReadConfig() {
-	configFile, err := ioutil.ReadFile("configuration.yaml")
+	configFile, err := ioutil.ReadFile("config/configuration.yaml")
 	if err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}

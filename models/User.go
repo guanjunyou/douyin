@@ -31,7 +31,7 @@ func (table *User) TableName() string {
 func GetUserById(Id int64) (User, error) {
 	var user User
 	// 传参禁止直接字符串拼接，防止SQL注入
-	err := utils.DB.Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
+	err := utils.GetMysqlDB().Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
 	if err != nil {
 		return user, err
 	}
@@ -41,7 +41,7 @@ func GetUserById(Id int64) (User, error) {
 func GetUserByName(name string) (User, error) {
 	var user User
 	// 传参禁止直接字符串拼接，防止SQL注入
-	err := utils.DB.Where("name = ? AND is_deleted != ?", name, 1).First(&user).Error
+	err := utils.GetMysqlDB().Where("name = ? AND is_deleted != ?", name, 1).First(&user).Error
 	if err != nil {
 		return user, err
 	}
@@ -49,7 +49,7 @@ func GetUserByName(name string) (User, error) {
 }
 
 func SaveUser(user User) error {
-	return utils.DB.Create(&user).Error
+	return utils.GetMysqlDB().Create(&user).Error
 }
 
 func UpdateUser(user User) {

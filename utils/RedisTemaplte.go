@@ -8,7 +8,7 @@ import (
 )
 
 func SaveTokenToRedis(username string, token string, expiration time.Duration) error {
-	client := InitRedisDB()
+	client := GetRedisDB()
 	ctx := context.Background()
 	key := fmt.Sprintf("%v%v", config.TokenKey, username)
 	err := client.Set(ctx, key, token, expiration).Err()
@@ -19,7 +19,7 @@ func SaveTokenToRedis(username string, token string, expiration time.Duration) e
 }
 
 func GetTokenFromRedis(username string) (string, error) {
-	client := InitRedisDB()
+	client := GetRedisDB()
 	ctx := context.Background()
 	key := fmt.Sprintf("%v%v", config.TokenKey, username)
 	token, err := client.Get(ctx, key).Result()
@@ -31,7 +31,7 @@ func GetTokenFromRedis(username string) (string, error) {
 
 // RefreshToken 刷新token有效期
 func RefreshToken(username string, expiration time.Duration) error {
-	client := InitRedisDB()
+	client := GetRedisDB()
 	ctx := context.Background()
 	key := fmt.Sprintf("%v%v", config.TokenKey, username)
 	err := client.Expire(ctx, key, expiration).Err()
