@@ -43,7 +43,7 @@ func GetVideoListByLastTime(latestTime time.Time) ([]Video, error) {
 	return videolist, nil
 }
 
-func SaveVedio(video *Video) error {
+func SaveVideo(video *Video) error {
 	err := utils.GetMysqlDB().Create(video).Error
 	return err
 }

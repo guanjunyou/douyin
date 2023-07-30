@@ -74,7 +74,7 @@ func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Cont
 		CoverUrl:     "",
 		Title:        replaceTitle,
 	}
-	err := models.SaveVedio(&video)
+	err := models.SaveVideo(&video)
 	if err != nil {
 		return err
 	}
