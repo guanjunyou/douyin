@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/router"
 	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
@@ -12,6 +13,7 @@ var SF *utils.Snowflake
 
 func main() {
 	initDeps()
+	config.ReadConfig()
 	go impl.RunMessageServer()
 
 	r := gin.Default()
