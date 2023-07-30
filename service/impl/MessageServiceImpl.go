@@ -4,12 +4,65 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
 	"io"
 	"net"
+	"sort"
 	"sync"
 )
 
 var chatConnMap = sync.Map{}
+
+type MessageServiceImpl struct {
+}
+
+func (messageService MessageServiceImpl) SendMessage(userId int64, toUserId int64, actionType int, content string) error {
+	err := models.SaveMessage(&models.Message{
+		CommonEntity: utils.NewCommonEntity(),
+		Content:      content,
+	})
+	if err != nil {
+		return err
+	}
+	err = models.SaveMessageSendEvent(&models.MessageSendEvent{
+		CommonEntity: utils.NewCommonEntity(),
+		UserId:       userId,
+		ToUserId:     toUserId,
+		MsgContent:   content,
+	})
+	if err != nil {
+		return err
+	}
+	err = models.SaveMessagePushEvent(&models.MessagePushEvent{
+		CommonEntity: utils.NewCommonEntity(),
+		FromUserId:   userId,
+		MsgContent:   content,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (messageService MessageServiceImpl) GetHistoryOfChat(userId int64, toUserId int64) ([]models.MessageDVO, error) {
+	//find from meesageSendEvent table
+	messageSendEvents, err := models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId)
+	sort.Sort(models.ByCreateTime(messageSendEvents))
+	if err != nil {
+		return nil, err
+	}
+	var messages []models.MessageDVO
+	for _, messageSendEvent := range messageSendEvents {
+		messages = append(messages, models.MessageDVO{
+			Id:         messageSendEvent.Id,
+			UserId:     messageSendEvent.UserId,
+			ToUserId:   messageSendEvent.ToUserId,
+			Content:    messageSendEvent.MsgContent,
+			CreateTime: messageSendEvent.CreateDate.Unix(),
+		})
+	}
+	return messages, nil
+}
 
 func RunMessageServer() {
 	listen, err := net.Listen("tcp", "127.0.0.1:9090")

@@ -53,5 +53,5 @@ func SaveUser(user User) error {
 }
 
 func UpdateUser(user User) {
-	utils.DB.Save(&user)
+	utils.GetMysqlDB().Save(&user)
 }
