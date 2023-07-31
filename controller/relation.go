@@ -32,7 +32,12 @@ func RelationAction(c *gin.Context) {
 	err := relationService.FollowUser(userClaims.CommonEntity.Id, toUserIdInt, 1)
 	if err != nil {
 		log.Printf("RelationAction Error !")
+		return
 	}
+	c.JSON(http.StatusOK, models.Response{
+		StatusCode: 0,
+		StatusMsg:  "",
+	})
 }
 
 // FollowList all users have same follow list
