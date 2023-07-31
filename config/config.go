@@ -21,15 +21,15 @@ type RedisConfig struct {
 }
 
 type VideoServerConfig struct {
-	Addr string `yaml:"Addr"`
-	Api  struct {
+	Addr2 string `yaml:"Addr2"` //拼接play_url
+	Addr  string `yaml:"Addr"`
+	Api   struct {
 		Upload struct {
 			Path   string `yaml:"Path"`   // /ftpServer/upload/
 			Method string `yaml:"Method"` // POST
 		} `yaml:"Upload"`
 	} `yaml:"Api"`
 }
-
 
 var Config Configuration
 

@@ -28,7 +28,7 @@ func Publish(c *gin.Context) {
 		})
 		return
 	}
-	title := c.Query("title")
+	title := c.PostForm("title")
 	//2. 调用service层处理业务逻辑
 	err = impl.Publish(data, userId, title, c)
 	if err != nil {
