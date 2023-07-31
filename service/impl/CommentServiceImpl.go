@@ -11,6 +11,7 @@ type CommentServiceImpl struct {
 
 func (commentService CommentServiceImpl) PostComments(comment models.Comment, video_id int64) error {
 	var video models.Video
+
 	err := utils.GetMysqlDB().Where("id = ? AND is_deleted != ?", video_id, 1).First(&video).Error
 	if err != nil {
 		return err
