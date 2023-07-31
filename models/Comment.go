@@ -1,6 +1,9 @@
 package models
 
-import "github.com/RaymondCode/simple-demo/utils"
+import (
+	"github.com/RaymondCode/simple-demo/utils"
+	"strconv"
+)
 
 type Comment struct {
 	utils.CommonEntity
@@ -68,7 +71,7 @@ func GetCommentByVideoId(videoId int64) []Comment {
 		return user, nil
 	}
 
-	err := utils.GetMysqlDB().Where("video_id = ? AND is_deleted != ?", videoId, 1).Find(&commentDBs).Error
+	err := utils.GetMysqlDB().Debug().Where("video_id = ? AND is_deleted != ?", strconv.Itoa(int(videoId)), 1).Find(&commentDBs).Error
 	if err != nil {
 		return comments
 	}
