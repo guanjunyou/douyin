@@ -24,7 +24,7 @@ type CommentActionResponse struct {
 	Comment models.Comment `json:"comment,omitempty"`
 }
 
-func ParseVideoId(c *gin.Context) int64 {
+func parseVideoId(c *gin.Context) int64 {
 	video_id, err := strconv.ParseInt(c.Query("video_id"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -34,7 +34,7 @@ func ParseVideoId(c *gin.Context) int64 {
 	return video_id
 }
 
-func ParseCommetId(c *gin.Context) int64 {
+func parseCommetId(c *gin.Context) int64 {
 	comment_id, err := strconv.ParseInt(c.Query("comment_id"), 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -44,7 +44,7 @@ func ParseCommetId(c *gin.Context) int64 {
 	return comment_id
 }
 
-// CommentAction no practical effect, just check if token is valid
+// CommentAction comment action, 1 for post, 2 for delete
 func CommentAction(c *gin.Context) {
 	token := c.Query("token")
 	actionType := c.Query("action_type")
@@ -62,13 +62,18 @@ func CommentAction(c *gin.Context) {
 
 	if actionType == "1" {
 		text := c.Query("comment_text")
+		utils.InitFilter()
+
+		textAfterFilter := utils.Filter.Replace(text, '*')
+
 		comment := models.Comment{
 			CommonEntity: utils.NewCommonEntity(),
 			//Id:         1,
 			User:    user,
-			Content: text,
+			Content: textAfterFilter,
 		}
-		video_id := ParseVideoId(c)
+
+		video_id := parseVideoId(c)
 		err := GetCommentService().PostComments(comment, video_id)
 		if err != nil {
 			log.Println(err)
@@ -80,7 +85,7 @@ func CommentAction(c *gin.Context) {
 			Comment: comment})
 		return
 	} else if actionType == "2" {
-		comment_id := ParseCommetId(c)
+		comment_id := parseCommetId(c)
 		err := GetCommentService().DeleteComments(comment_id)
 		if err != nil {
 			log.Println(err)
@@ -91,13 +96,12 @@ func CommentAction(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, models.Response{StatusCode: 0})
-
 }
 
 // CommentList all videos have same demo comment list
 func CommentList(c *gin.Context) {
 	c.JSON(http.StatusOK, CommentListResponse{
 		Response:    models.Response{StatusCode: 0, StatusMsg: "Comment list"},
-		CommentList: GetCommentService().CommentList(ParseVideoId(c)),
+		CommentList: GetCommentService().CommentList(parseVideoId(c)),
 	})
 }
