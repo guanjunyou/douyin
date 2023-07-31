@@ -36,7 +36,7 @@ var (
 	TokenKey string  = "token:"
 
 	//filter
-	WordDictPath = "../public/sensitiveDict.txt"
+	WordDictPath = "./public/sensitiveDict.txt"
 )
 
 var MailPassword = os.Getenv("MailPassword")

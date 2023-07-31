@@ -18,34 +18,44 @@ type MessageListResponse struct {
 	Data []models.MessageDVO `json:"message_list,omitempty"`
 }
 
-// MessageAction no practical effect, just check if token is valid
+func errRespond(c *gin.Context, err error, statusCode int32, statusMsg string) bool {
+	if err != nil {
+		c.JSON(http.StatusOK, models.Response{StatusCode: statusCode, StatusMsg: statusMsg})
+		return true
+	}
+	return false
+}
+
+func responseMessageList(c *gin.Context, messageList []models.MessageDVO) {
+	c.JSON(http.StatusOK, MessageListResponse{Response: models.Response{StatusCode: 0, StatusMsg: "Message list success"}, Data: messageList})
+}
+
+// MessageAction no practical effect, just errRespond if token is valid
 func MessageAction(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
 	content := c.Query("content")
 
 	userClaim, err := utils.AnalyseToken(token)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "Token is invalid"})
+	if errRespond(c, err, 1, "Token is invalid") {
 		return
 	}
+
 	user, err := GetUserService().GetUserByName(userClaim.Name)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	if errRespond(c, err, 1, "User doesn't exist") {
 		return
 	}
 
 	toUserIdInt64, err := strconv.ParseInt(toUserId, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "to_user_id is invalid"})
+	if errRespond(c, err, 1, "to_user_id is invalid") {
 		return
 	}
 
 	err = GetMessageService().SendMessage(user.Id, toUserIdInt64, 1, content)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "Message send failed"})
+	if errRespond(c, err, 1, "Message send failed") {
 		return
 	}
+
 	c.JSON(http.StatusOK, models.Response{StatusCode: 0, StatusMsg: "Message send success"})
 }
 
@@ -55,26 +65,23 @@ func MessageChat(c *gin.Context) {
 	toUserId := c.Query("to_user_id")
 
 	userClaim, err := utils.AnalyseToken(token)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "Token is invalid"})
+	if errRespond(c, err, 1, "Token is invalid") {
 		return
 	}
+
 	user, err := GetUserService().GetUserByName(userClaim.Name)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+	if errRespond(c, err, 1, "User doesn't exist") {
 		return
 	}
 
 	toUserIdInt64, err := strconv.ParseInt(toUserId, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "to_user_id is invalid"})
+	if errRespond(c, err, 1, "to_user_id is invalid") {
 		return
 	}
 
 	messageList, err := GetMessageService().GetHistoryOfChat(user.Id, toUserIdInt64)
-	if err != nil {
-		c.JSON(http.StatusOK, models.Response{StatusCode: 1, StatusMsg: "Message get failed"})
+	if errRespond(c, err, 1, "Message get failed") {
 		return
 	}
-	c.JSON(http.StatusOK, MessageListResponse{Response: models.Response{StatusCode: 0, StatusMsg: "Message get success"}, Data: messageList})
+	responseMessageList(c, messageList)
 }
