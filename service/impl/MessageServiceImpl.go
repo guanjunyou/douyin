@@ -47,10 +47,16 @@ func (messageService MessageServiceImpl) SendMessage(userId int64, toUserId int6
 func (messageService MessageServiceImpl) GetHistoryOfChat(userId int64, toUserId int64) ([]models.MessageDVO, error) {
 	//find from meesageSendEvent table
 	messageSendEvents, err := models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId)
-	sort.Sort(models.ByCreateTime(messageSendEvents))
 	if err != nil {
 		return nil, err
 	}
+	messageSendEventsOpposite, err := models.FindMessageSendEventByUserIdAndToUserId(toUserId, userId)
+	if err != nil {
+		return nil, err
+	}
+	messageSendEvents = append(messageSendEvents, messageSendEventsOpposite...)
+	sort.Sort(models.ByCreateTime(messageSendEvents))
+
 	var messages []models.MessageDVO
 	for _, messageSendEvent := range messageSendEvents {
 		messages = append(messages, models.MessageDVO{
