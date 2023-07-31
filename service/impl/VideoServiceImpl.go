@@ -79,7 +79,8 @@ func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Cont
 		return err
 	}
 	//保存视频在本地中
-	if err = c.SaveUploadedFile(data, saveFile); err != nil {
+	// if err = c.SaveUploadedFile(data, saveFile); err != nil {
+	if err = utils.UploadToServer(data); err != nil {
 		return err
 	}
 	user, err1 := models.GetUserById(userId)
