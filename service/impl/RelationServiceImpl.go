@@ -16,6 +16,9 @@ type followResult struct {
 
 // FollowUser 关注用户
 func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId int64, actionType int) error {
+	if userId == toUserId {
+		return fmt.Errorf("你不能关注(或者取消关注)自己")
+	}
 	var sql string
 	// 1 关注 2 取消
 	switch actionType {

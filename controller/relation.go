@@ -31,7 +31,10 @@ func RelationAction(c *gin.Context) {
 
 	err := relationService.FollowUser(userClaims.CommonEntity.Id, toUserIdInt, 1)
 	if err != nil {
-		log.Printf("RelationAction Error !")
+		c.JSON(http.StatusOK, models.Response{
+			StatusCode: 1,
+			StatusMsg:  err.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusOK, models.Response{
