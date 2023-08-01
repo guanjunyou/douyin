@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/utils"
+	"sync"
 )
 
 type RelationServiceImpl struct {
@@ -44,6 +45,19 @@ func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]model
 	if err != nil {
 		return nil, err
 	}
+
+	//协程并发更新，isFollow 为 True 前端才能显示已关注
+	var wg sync.WaitGroup
+	for i := 0; i < len(users); i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			users[i].IsFollow = true
+		}(i)
+	}
+
+	wg.Wait()
+
 	return users, nil
 }
 

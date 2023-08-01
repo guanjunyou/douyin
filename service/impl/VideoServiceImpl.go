@@ -9,44 +9,71 @@ import (
 	"github.com/jinzhu/copier"
 	"mime/multipart"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
 type VideoServiceImpl struct {
 	service.UserService
+	service.FavoriteService
 }
 
-func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time) ([]models.VideoDVO, time.Time, error) {
+func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time, userId int64) ([]models.VideoDVO, time.Time, error) {
 	videolist, err := models.GetVideoListByLastTime(latestTime)
 	size := len(videolist)
+	var wg sync.WaitGroup
 	VideoDVOList := make([]models.VideoDVO, size)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
+	//for i := range videolist {
+	//	var authorId = videolist[i].AuthorId
+	//
+	//	//一定要通过videoService来调用 userSevice
+	//	user, err1 := videoService.UserService.GetUserById(authorId)
+	//	if err1 != nil {
+	//		return nil, time.Time{}, err1
+	//	}
+	//	var videoDVO models.VideoDVO
+	//	err2 := copier.Copy(&videoDVO, &videolist[i])
+	//	if err2 != nil {
+	//		return nil, time.Time{}, err2
+	//	}
+	//	videoDVO.Author = user
+	//	videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
+	//	VideoDVOList[i] = videoDVO
+	//}
+	var err0 error
 	for i := range videolist {
-		var userId = videolist[i].AuthorId
+		var authorId = videolist[i].AuthorId
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			// 通过 videoService 来调用 userService
+			user, err1 := videoService.UserService.GetUserById(authorId)
+			if err1 != nil {
+				err0 = err1
+				return
+			}
+			var videoDVO models.VideoDVO
+			err2 := copier.Copy(&videoDVO, &videolist[i])
+			if err2 != nil {
+				err0 = err2
+				return
+			}
+			videoDVO.Author = user
+			if userId != -1 {
+				videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
+			} else {
+				videoDVO.IsFavorite = false
+			}
+			VideoDVOList[i] = videoDVO
+		}(i)
+	}
 
-		//一定要通过videoService来调用 userSevice
-		user, err1 := videoService.UserService.GetUserById(userId)
-		if err1 != nil {
-			return nil, time.Time{}, err1
-		}
-		var videoDVO models.VideoDVO
-		err2 := copier.Copy(&videoDVO, &videolist[i])
-		if err2 != nil {
-			return nil, time.Time{}, err2
-		}
-		videoDVO.Author = user
-		VideoDVOList[i] = videoDVO
-		//VideoDVOList = append(VideoDVOList, models.VideoDVO{
-		//	CommonEntity:  videolist[i].CommonEntity,
-		//	Author:        user,
-		//	PlayUrl:       videolist[i].PlayUrl,
-		//	CoverUrl:      videolist[i].CoverUrl,
-		//	FavoriteCount: videolist[i].FavoriteCount,
-		//	CommentCount:  videolist[i].CommentCount,
-		//	IsFavorite:    videolist[i].IsFavorite,
-		//})
+	wg.Wait()
+	if err0 != nil {
+		return nil, time.Time{}, err0
 	}
 	nextTime := time.Now()
 	if len(videolist) != 0 {
