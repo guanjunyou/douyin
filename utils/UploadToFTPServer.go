@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/RaymondCode/simple-demo/config"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
@@ -32,7 +33,7 @@ func UploadToServer(data *multipart.FileHeader) error {
 	}
 
 	// 添加fileType参数
-	err = writer.WriteField("filetype", fmt.Sprintf("%d", fileType))
+	err = writer.WriteField("fileType", fmt.Sprintf("%d", fileType))
 	if err != nil {
 		return fmt.Errorf("error writing filetype to request: %w", err)
 	}
@@ -42,7 +43,8 @@ func UploadToServer(data *multipart.FileHeader) error {
 	if err != nil {
 		return fmt.Errorf("error closing writer: %w", err)
 	}
-
+	log.Println(config.Config.VideoServer.Api.Upload.Method)
+	log.Println("http://" + config.Config.VideoServer.Addr + config.Config.VideoServer.Api.Upload.Path)
 	req, err := http.NewRequest(
 		config.Config.VideoServer.Api.Upload.Method,
 		"http://"+config.Config.VideoServer.Addr+config.Config.VideoServer.Api.Upload.Path,
