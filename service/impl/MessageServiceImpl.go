@@ -16,7 +16,7 @@ var chatConnMap = sync.Map{}
 type MessageServiceImpl struct {
 }
 
-func (messageService MessageServiceImpl) SendMessage(userId int64, toUserId int64, actionType int, content string) error {
+func (messageService MessageServiceImpl) SendMsg(userId int64, toUserId int64, actionType int, content string) error {
 	err := models.SaveMessage(&models.Message{
 		CommonEntity: utils.NewCommonEntity(),
 		Content:      content,
