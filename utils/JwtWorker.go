@@ -17,11 +17,10 @@ var myKey = []byte("douyin")
 
 // GenerateToken
 // 生成 token
-func GenerateToken(name, password string, commonEntity CommonEntity) (string, error) {
+func GenerateToken(name string, commonEntity CommonEntity) (string, error) {
 	UserClaim := &UserClaims{
 		CommonEntity: commonEntity,
 		Name:         name,
-		Password:     password,
 		//IsAdmin:        isAdmin,
 		StandardClaims: jwt.StandardClaims{},
 	}
