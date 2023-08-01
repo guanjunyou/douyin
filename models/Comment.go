@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/RaymondCode/simple-demo/utils"
+	"gorm.io/gorm"
 	"strconv"
 )
 
@@ -49,12 +50,49 @@ func (commentDB *CommentDB) TableName() string {
 }
 
 func SaveComment(commentDB *CommentDB) error {
-	return utils.GetMysqlDB().Create(commentDB).Error
+	videoID := commentDB.VideoId
+	//comment_count++
+	tx := utils.GetMysqlDB().Begin()
+
+	err := tx.Model(&Video{}).Where("id = ?", videoID).Update("comment_count", gorm.Expr("comment_count + ?", 1)).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Create(commentDB).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func DeleteComment(commentId int64) error {
 	//set is_deleted = 1
-	return utils.GetMysqlDB().Model(&CommentDB{}).Where("id = ?", commentId).Update("is_deleted", 1).Error
+	tx := utils.GetMysqlDB().Begin()
+
+	var commentDB CommentDB
+	err := tx.Where("id = ?", commentId).First(&commentDB).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Model(&Video{}).Where("id = ?", commentDB.VideoId).Update("comment_count", gorm.Expr("comment_count - ?", 1)).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Model(&CommentDB{}).Where("id = ?", commentId).Update("is_deleted", 1).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func GetCommentByVideoId(videoId int64) []Comment {
@@ -75,6 +113,11 @@ func GetCommentByVideoId(videoId int64) []Comment {
 	if err != nil {
 		return comments
 	}
+	//change comment_count
+	err = utils.GetMysqlDB().Model(&Video{}).Where("id = ?", videoId).Update("comment_count", len(commentDBs)).Error
+	if err != nil {
+	}
+
 	for _, commentDB := range commentDBs {
 		user, err := GetUser(commentDB.UserId)
 		if err != nil {
