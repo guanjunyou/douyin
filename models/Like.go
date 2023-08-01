@@ -53,11 +53,18 @@ func (l *Like) FindByUserIdAndVedioId(tx *gorm.DB) (res *Like, err error) {
 	return
 }
 
+func (l *Like) CountByUserIdAndVedioId(tx *gorm.DB) (res *Like, err error) {
+	res = &Like{}
+	err = tx.Model(Like{}).Where("video_id = ? and user_id = ? and is_deleted = 0", l.VideoId, l.UserId).Find(res).Error
+	return
+}
+
 // GetLikeVedioListDVO 查询喜欢的视频列表
 func (l *Like) GetLikeVedioListDVO(userId int64) ([]LikeVedioListDVO, error) {
 	tx := utils.GetMysqlDB()
 	var err error
 	res := make([]LikeVedioListDVO, 0)
 	err = tx.Table("`like` l").Select("v.*").Joins(`LEFT JOIN video v ON l.video_id = v.id`).Where("l.user_id = ? and l.is_deleted = 0", userId).Preload("Author").Find(&res).Error
+
 	return res, err
 }

@@ -2,6 +2,7 @@ package impl
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/RaymondCode/simple-demo/models"
@@ -15,7 +16,7 @@ type FavoriteServiceImpl struct {
 }
 
 // LikeVedio 点赞或者取消点赞
-func (fsi FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64, actionType int) error {
+func (favoriteService FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64, actionType int) error {
 	var err error
 	tx := utils.GetMysqlDB().Begin()
 	l := models.Like{
@@ -75,6 +76,7 @@ func (fsi FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64, actionType
 
 	}
 
+	//TODO 这个  commit 后会把视频的 create_date 改了
 	tx.Commit()
 	return err
 }
@@ -86,14 +88,16 @@ func findVedioAndUpdateFavoriteCount(tx *gorm.DB, vid int64, count int64) (err e
 		log.Printf("查询视频发生异常 = %v", err)
 		return
 	}
+	fmt.Println(vInDB.CreateDate)
 	if err = tx.Model(&models.Video{}).Where("id = ?", vid).Update("favorite_count", vInDB.FavoriteCount+count).Error; err != nil {
 		log.Printf("修改视频点赞数量发生异常 = %v", err)
 		return
 	}
+	fmt.Println(vInDB.CreateDate)
 	return
 }
 
-func (fsi FavoriteServiceImpl) QueryVediosOfLike(userId int64) ([]models.LikeVedioListDVO, error) {
+func (favoriteService FavoriteServiceImpl) QueryVediosOfLike(userId int64) ([]models.LikeVedioListDVO, error) {
 	var l models.Like
 	var res []models.LikeVedioListDVO
 	var err error
@@ -104,4 +108,20 @@ func (fsi FavoriteServiceImpl) QueryVediosOfLike(userId int64) ([]models.LikeVed
 	}
 
 	return res, err
+}
+
+func (favoriteService FavoriteServiceImpl) FindIsFavouriteByUserIdAndVideoId(userId int64, videoId int64) bool {
+	tx := utils.GetMysqlDB()
+	like := models.Like{
+		UserId:  userId,
+		VideoId: videoId,
+	}
+
+	isLike, _ := like.FindByUserIdAndVedioId(tx)
+
+	if isLike.Id != 0 {
+		return true
+	} else {
+		return false
+	}
 }
