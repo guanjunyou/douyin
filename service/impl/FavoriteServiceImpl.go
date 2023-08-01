@@ -16,7 +16,7 @@ type FavoriteServiceImpl struct {
 }
 
 // LikeVedio 点赞或者取消点赞
-func (favoriteService FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64, actionType int) error {
+func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, vedioId int64, actionType int) error {
 	var err error
 	tx := utils.GetMysqlDB().Begin()
 	l := models.Like{
@@ -47,7 +47,7 @@ func (favoriteService FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64
 			return err
 		}
 
-		if err = findVedioAndUpdateFavoriteCount(tx, vedioId, 1); err != nil {
+		if err = findVideoAndUpdateFavoriteCount(tx, vedioId, 1); err != nil {
 			log.Printf("修改视频点赞数量发生异常 = %v", err)
 			tx.Rollback()
 			return err
@@ -68,7 +68,7 @@ func (favoriteService FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64
 			return err
 		}
 
-		if err = findVedioAndUpdateFavoriteCount(tx, vedioId, -1); err != nil {
+		if err = findVideoAndUpdateFavoriteCount(tx, vedioId, -1); err != nil {
 			log.Printf("修改视频点赞数量发生异常 = %v", err)
 			tx.Rollback()
 			return err
@@ -81,8 +81,8 @@ func (favoriteService FavoriteServiceImpl) LikeVedio(userId int64, vedioId int64
 	return err
 }
 
-// findVedioAndUpdateFavoriteCount 修改视频的点赞数量，count 为 +-1
-func findVedioAndUpdateFavoriteCount(tx *gorm.DB, vid int64, count int64) (err error) {
+// findVideoAndUpdateFavoriteCount 修改视频的点赞数量，count 为 +-1
+func findVideoAndUpdateFavoriteCount(tx *gorm.DB, vid int64, count int64) (err error) {
 	var vInDB models.Video
 	if err = tx.Model(&models.Video{}).Where("id = ? and is_deleted = 0", vid).Take(&vInDB).Error; err != nil {
 		log.Printf("查询视频发生异常 = %v", err)
@@ -97,7 +97,7 @@ func findVedioAndUpdateFavoriteCount(tx *gorm.DB, vid int64, count int64) (err e
 	return
 }
 
-func (favoriteService FavoriteServiceImpl) QueryVediosOfLike(userId int64) ([]models.LikeVedioListDVO, error) {
+func (favoriteService FavoriteServiceImpl) QueryVideosOfLike(userId int64) ([]models.LikeVedioListDVO, error) {
 	var l models.Like
 	var res []models.LikeVedioListDVO
 	var err error
