@@ -32,7 +32,7 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 	var result followResult
 	utils.GetMysqlDB().Raw(sql, userId, toUserId).Scan(&result)
 	if actionType != 2 && result.Cnt != 0 {
-		return fmt.Errorf("已经")
+		return fmt.Errorf("操作失败")
 	}
 	return nil
 }

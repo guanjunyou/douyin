@@ -48,8 +48,8 @@ CREATE TABLE `follow`
     `id`             bigint(64) NOT NULL AUTO_INCREMENT,
     `user_id`        bigint(64) NULL DEFAULT NULL COMMENT '用户id',
     `follow_user_id` bigint(64) NULL DEFAULT NULL COMMENT '关注的用户id',
-    `create_date`    timestamp  NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted`     int(1)     NULL DEFAULT NULL,
+    `create_date`    timestamp  NULL DEFAULT CURRENT_TIMESTAMP,
+    `is_deleted`     int(1)     NULL DEFAULT 0,
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
   CHARACTER SET = utf8mb4

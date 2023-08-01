@@ -28,8 +28,9 @@ func RelationAction(c *gin.Context) {
 
 	userClaims, _ := utils.AnalyseToken(token)
 	toUserIdInt, _ := strconv.ParseInt(toUserId, 10, 64)
+	actionTypeInt, _ := strconv.Atoi(actionType)
 
-	err := relationService.FollowUser(userClaims.CommonEntity.Id, toUserIdInt, 1)
+	err := relationService.FollowUser(userClaims.CommonEntity.Id, toUserIdInt, actionTypeInt)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 1,
