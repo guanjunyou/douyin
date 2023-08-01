@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/RaymondCode/simple-demo/models"
-	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -30,7 +29,7 @@ func Publish(c *gin.Context) {
 	}
 	title := c.PostForm("title")
 	//2. 调用service层处理业务逻辑
-	err = impl.Publish(data, userId, title, c)
+	err = GetVideoService().Publish(data, userId, title, c)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 1,
@@ -58,7 +57,7 @@ func PublishList(c *gin.Context) {
 			VideoList: nil,
 		})
 	}
-	publishList, err := impl.PublishList(userId)
+	publishList, err := GetVideoService().PublishList(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, VideoListResponse{
 			Response: models.Response{

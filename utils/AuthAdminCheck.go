@@ -41,6 +41,7 @@ func RefreshHandler() gin.HandlerFunc {
 			//4.1 如果token可以被正确解析，重建redis缓存
 			err := SaveTokenToRedis(userClaims.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
 			if err != nil {
+
 				c.JSON(http.StatusForbidden, gin.H{"StatusCode": "1", "StatusMsg": "服务器异常"})
 				c.Abort()
 				return

@@ -57,7 +57,7 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 
 // Publish 投稿接口
 // TODO 借助redis协助实现feed流
-func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error {
+func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error {
 	//从title中过滤敏感词汇
 	replaceTitle := utils.Filter.Replace(title, '#')
 	//文件名
@@ -94,7 +94,7 @@ func Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Cont
 }
 
 // PublishList  发布列表
-func PublishList(userId int64) ([]models.VideoDVO, error) {
+func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDVO, error) {
 	videoList, err := models.GetVediosByUserId(userId)
 	if err != nil {
 		return nil, err
