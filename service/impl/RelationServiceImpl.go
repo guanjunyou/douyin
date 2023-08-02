@@ -19,7 +19,7 @@ type followResult struct {
 
 // FollowUser 关注用户
 func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId int64, actionType int) error {
-	relationServiceImpl.Logger.Debug("FollowUser\n")
+	relationServiceImpl.Logger.Info("FollowUser\n")
 	if userId == toUserId {
 		return fmt.Errorf("你不能关注(或者取消关注)自己")
 	}
@@ -43,7 +43,7 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 
 // GetFollows 查询关注列表
 func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]models.User, error) {
-	relationServiceImpl.Logger.Debugf("GetFollows\n")
+	relationServiceImpl.Logger.Info("GetFollows\n")
 	var users []models.User
 	err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
 	if err != nil {
