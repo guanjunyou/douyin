@@ -51,7 +51,7 @@ func MessageAction(c *gin.Context) {
 		return
 	}
 
-	err = GetMessageService().SendMsg(user.Id, toUserIdInt64, content)
+	err = GetMessageService().SendMessage(user.Id, toUserIdInt64, content)
 	if errRespond(c, err, 1, "Message send failed") {
 		return
 	}
