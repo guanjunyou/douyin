@@ -37,7 +37,11 @@ func Feed(c *gin.Context) {
 	var latestTime time.Time
 	if latestTimeStr != "0" {
 		me, _ := strconv.ParseInt(latestTimeStr, 10, 64)
-		latestTime = time.Unix(me/1000, 0)
+		latestTime = time.Unix(me, 0)
+		// 前端传入的可能是毫秒级
+		if latestTime.Year() > 9999 {
+			latestTime = time.Unix(me/1000, 0)
+		}
 	} else {
 		latestTime = time.Now()
 	}
