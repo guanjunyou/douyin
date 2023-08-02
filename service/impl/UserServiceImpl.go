@@ -75,7 +75,7 @@ func (userService UserServiceImpl) Register(username string, password string, c 
 			Response: models.Response{StatusCode: 1, StatusMsg: "Cant not save the User!"},
 		})
 	} else {
-		token, err1 := utils.GenerateToken(username, password, newUser.CommonEntity)
+		token, err1 := utils.GenerateToken(username, newUser.CommonEntity)
 		if err1 != nil {
 			log.Printf("Can not get the token!")
 		}
@@ -120,7 +120,7 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 		return pwdErr
 	}
 
-	token, err2 := utils.GenerateToken(username, password, user.CommonEntity)
+	token, err2 := utils.GenerateToken(username, user.CommonEntity)
 	if err2 != nil {
 		c.JSON(http.StatusInternalServerError, UserLoginResponse{
 			Response: models.Response{StatusCode: 1, StatusMsg: "生成token失败"},
