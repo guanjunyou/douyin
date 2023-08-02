@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/utils"
+	"github.com/sirupsen/logrus"
 	"sync"
 )
 
 type RelationServiceImpl struct {
+	Logger *logrus.Logger
 }
 
 // FollowResult 定义存储过程的返回值
@@ -17,6 +19,7 @@ type followResult struct {
 
 // FollowUser 关注用户
 func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId int64, actionType int) error {
+	relationServiceImpl.Logger.Debug("FollowUser\n")
 	if userId == toUserId {
 		return fmt.Errorf("你不能关注(或者取消关注)自己")
 	}
@@ -40,6 +43,7 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 
 // GetFollows 查询关注列表
 func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]models.User, error) {
+	relationServiceImpl.Logger.Debugf("GetFollows\n")
 	var users []models.User
 	err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
 	if err != nil {
@@ -63,6 +67,7 @@ func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]model
 
 // GetFollowers 查询粉丝列表
 func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]models.User, error) {
+	relationServiceImpl.Logger.Info("GetFollowers")
 	var users []models.User
 	err := utils.GetMysqlDB().Table("follow").Where("follow_user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
 	if err != nil {

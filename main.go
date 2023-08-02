@@ -7,6 +7,7 @@ import (
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 var SF *utils.Snowflake
@@ -14,6 +15,7 @@ var SF *utils.Snowflake
 func main() {
 	initDeps()
 	config.ReadConfig()
+	logrus.SetLevel(logrus.DebugLevel)
 	go impl.RunMessageServer()
 
 	r := gin.Default()
