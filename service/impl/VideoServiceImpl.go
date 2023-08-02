@@ -95,7 +95,8 @@ func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId 
 	//saveFile := filepath.Join("./public/", finalName)
 	//保存视频在本地中
 	// if err = c.SaveUploadedFile(data, saveFile); err != nil {
-	if err := utils.UploadToServer(data); err != nil {
+	coverName, err := utils.UploadToServer(data)
+	if err != nil {
 		return err
 	}
 	user, err1 := models.GetUserById(userId)
@@ -103,9 +104,9 @@ func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId 
 		return nil
 	}
 	//将扩展名修改为.png并返回新的string作为封面文件名
-	ext := filepath.Ext(filename)
-	name := filename[:len(filename)-len(ext)]
-	coverName := name + ".png"
+	//ext := filepath.Ext(filename)
+	//name := filename[:len(filename)-len(ext)]
+	//coverName := name + ".png"
 	//保存视频在数据库中
 	video := models.Video{
 		CommonEntity: utils.NewCommonEntity(),
@@ -114,9 +115,9 @@ func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId 
 		CoverUrl:     "http://" + config.Config.VideoServer.Addr2 + "/photos/" + coverName,
 		Title:        replaceTitle,
 	}
-	err := models.SaveVideo(&video)
-	if err != nil {
-		return err
+	err2 := models.SaveVideo(&video)
+	if err2 != nil {
+		return err2
 	}
 	//用户发布作品数加1
 	user.WorkCount = user.WorkCount + 1
