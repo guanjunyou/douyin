@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
+	"time"
 )
 
 // GetMysqlDB 需要使用数据库的时候直接创建一个连接 调用此方法即可/**
@@ -14,6 +15,10 @@ func GetMysqlDB() *gorm.DB {
 	if err != nil {
 		log.Println("gorm Init Error : ", err)
 	}
+	sqlDb, _ := db.DB()
+	sqlDb.SetMaxOpenConns(100)
+	sqlDb.SetMaxIdleConns(10)
+	sqlDb.SetConnMaxLifetime(10 * time.Minute)
 	return db
 }
 
