@@ -7,6 +7,7 @@ import (
 	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,7 +18,11 @@ type UserListResponse struct {
 	UserList []models.User `json:"user_list"`
 }
 
-var relationService service.RelationService = impl.RelationServiceImpl{}
+func NewRelationService() service.RelationService {
+	return &impl.RelationServiceImpl{
+		Logger: logrus.New(),
+	}
+}
 
 // RelationAction no practical effect, just check if token is valid
 func RelationAction(c *gin.Context) {
@@ -30,7 +35,7 @@ func RelationAction(c *gin.Context) {
 	toUserIdInt, _ := strconv.ParseInt(toUserId, 10, 64)
 	actionTypeInt, _ := strconv.Atoi(actionType)
 
-	err := relationService.FollowUser(userClaims.CommonEntity.Id, toUserIdInt, actionTypeInt)
+	err := NewRelationService().FollowUser(userClaims.CommonEntity.Id, toUserIdInt, actionTypeInt)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 1,
@@ -48,7 +53,7 @@ func RelationAction(c *gin.Context) {
 func FollowList(c *gin.Context) {
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.ParseInt(userId, 10, 64)
-	followUser, err := relationService.GetFollows(userIdInt)
+	followUser, err := NewRelationService().GetFollows(userIdInt)
 	if err != nil {
 		log.Printf("GetFollows fail")
 	}
@@ -64,7 +69,7 @@ func FollowList(c *gin.Context) {
 func FollowerList(c *gin.Context) {
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.ParseInt(userId, 10, 64)
-	followUser, err := relationService.GetFollowers(userIdInt)
+	followUser, err := NewRelationService().GetFollowers(userIdInt)
 	if err != nil {
 		log.Printf("GetFollows fail")
 	}
@@ -80,7 +85,7 @@ func FollowerList(c *gin.Context) {
 func FriendList(c *gin.Context) {
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.ParseInt(userId, 10, 64)
-	followUser, err := relationService.GetFriends(userIdInt)
+	followUser, err := NewRelationService().GetFriends(userIdInt)
 	if err != nil {
 		log.Printf("GetFollows fail")
 	}
