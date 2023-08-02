@@ -95,24 +95,29 @@ func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId 
 	//saveFile := filepath.Join("./public/", finalName)
 	//保存视频在本地中
 	// if err = c.SaveUploadedFile(data, saveFile); err != nil {
-	if err := utils.UploadToServer(data); err != nil {
+	coverName, err := utils.UploadToServer(data)
+	if err != nil {
 		return err
 	}
 	user, err1 := models.GetUserById(userId)
 	if err1 != nil {
 		return nil
 	}
+	//将扩展名修改为.png并返回新的string作为封面文件名
+	//ext := filepath.Ext(filename)
+	//name := filename[:len(filename)-len(ext)]
+	//coverName := name + ".png"
 	//保存视频在数据库中
 	video := models.Video{
 		CommonEntity: utils.NewCommonEntity(),
 		AuthorId:     userId,
-		PlayUrl:      "http://" + config.Config.VideoServer.Addr2 + "/" + filename,
-		CoverUrl:     "",
+		PlayUrl:      "http://" + config.Config.VideoServer.Addr2 + "/videos/" + filename,
+		CoverUrl:     "http://" + config.Config.VideoServer.Addr2 + "/photos/" + coverName,
 		Title:        replaceTitle,
 	}
-	err := models.SaveVideo(&video)
-	if err != nil {
-		return err
+	err2 := models.SaveVideo(&video)
+	if err2 != nil {
+		return err2
 	}
 	//用户发布作品数加1
 	user.WorkCount = user.WorkCount + 1
@@ -128,20 +133,33 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 	}
 	size := len(videoList)
 	VideoDVOList := make([]models.VideoDVO, size)
+	//创建多个协程并发更新
+	var wg sync.WaitGroup
+	//接收协程产生的错误
+	var err0 error
 	for i := range videoList {
-		var userId = videoList[i].AuthorId
-		//一定要通过videoService来调用 userSevice
-		user, err1 := models.GetUserById(userId)
-		if err1 != nil {
-			return nil, err1
-		}
-		var videoDVO models.VideoDVO
-		err := copier.Copy(&videoDVO, &videoList[i])
-		if err != nil {
-			return nil, err
-		}
-		videoDVO.Author = user
-		VideoDVOList[i] = videoDVO
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			var userId = videoList[i].AuthorId
+			//一定要通过videoService来调用 userSevice
+			user, err1 := models.GetUserById(userId)
+			if err1 != nil {
+				err0 = err1
+			}
+			var videoDVO models.VideoDVO
+			err := copier.Copy(&videoDVO, &videoList[i])
+			if err != nil {
+				err0 = err1
+			}
+			videoDVO.Author = user
+			VideoDVOList[i] = videoDVO
+		}(i)
+	}
+	wg.Wait()
+	//处理协程内的错误
+	if err0 != nil {
+		return nil, err0
 	}
 	return VideoDVOList, nil
 }

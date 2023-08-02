@@ -2,16 +2,23 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/config"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
 )
 
-func UploadToServer(data *multipart.FileHeader) error {
+type ResponseBody struct {
+	Url      string `json:"url"`
+	CoverUrl string `json:"cover_url"`
+}
+
+func UploadToServer(data *multipart.FileHeader) (string, error) {
 	fileName := data.Filename
 	fileType := getFileCategory(getFileType(fileName))
 	// 构建HTTP请求的Body
@@ -24,23 +31,23 @@ func UploadToServer(data *multipart.FileHeader) error {
 
 	part, err := writer.CreateFormFile("file", data.Filename)
 	if err != nil {
-		return fmt.Errorf("error writing file to request: %w", err)
+		return "", fmt.Errorf("error writing file to request: %w", err)
 	}
 	_, err = io.Copy(part, file)
 	if err != nil {
-		return fmt.Errorf("error copying file to request: %w", err)
+		return "", fmt.Errorf("error copying file to request: %w", err)
 	}
 
 	// 添加fileType参数
-	err = writer.WriteField("filetype", fmt.Sprintf("%d", fileType))
+	err = writer.WriteField("fileType", fmt.Sprintf("%d", fileType))
 	if err != nil {
-		return fmt.Errorf("error writing filetype to request: %w", err)
+		return "", fmt.Errorf("error writing filetype to request: %w", err)
 	}
 
 	// 结束写入
 	err = writer.Close()
 	if err != nil {
-		return fmt.Errorf("error closing writer: %w", err)
+		return "", fmt.Errorf("error closing writer: %w", err)
 	}
 
 	req, err := http.NewRequest(
@@ -49,7 +56,7 @@ func UploadToServer(data *multipart.FileHeader) error {
 		body,
 	)
 	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
+		return "", fmt.Errorf("error creating request: %w", err)
 	}
 
 	// 设置请求头
@@ -59,17 +66,21 @@ func UploadToServer(data *multipart.FileHeader) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error sending request: %w", err)
+		return "", fmt.Errorf("error sending request: %w", err)
 	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	fmt.Printf("Response: %s\n", respBody)
 	defer resp.Body.Close()
 
 	// 处理响应
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("resource upload failed, HTTP status code: %d", resp.StatusCode)
+		return "", fmt.Errorf("resource upload failed, HTTP status code: %d", resp.StatusCode)
 	}
 
+	var responseBody ResponseBody
+	err = json.Unmarshal(respBody, &responseBody)
 	fmt.Println("资源保存成功！")
-	return nil
+	return responseBody.CoverUrl, nil
 }
 
 func getFileType(filename string) string {

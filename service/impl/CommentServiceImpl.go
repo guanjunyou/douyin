@@ -23,8 +23,8 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 }
 
 // CommentList 查看视频的所有评论，按发布时间倒序
-func (commentService CommentServiceImpl) CommentList(vedioId int64) []models.Comment {
-	Comments := models.GetCommentByVideoId(vedioId)
+func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Comment {
+	Comments := models.GetCommentByVideoId(videoId)
 	sort.Sort(models.ByCreateDate(Comments))
 	return Comments
 }

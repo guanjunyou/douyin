@@ -59,7 +59,7 @@ func FavoriteAction(c *gin.Context) {
 	}
 
 	var fs impl.FavoriteServiceImpl
-	if err = fs.LikeVedio(userId, videoId, actionType); err != nil {
+	if err = fs.LikeVideo(userId, videoId, actionType); err != nil {
 		log.Printf("点赞发生异常 = %v", err)
 		if err.Error() == "-1" {
 			resultutil.GenFail(c, "该视频已点赞")
@@ -92,7 +92,7 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	var fs impl.FavoriteServiceImpl
-	res, err := fs.QueryVediosOfLike(userId)
+	res, err := fs.QueryVideosOfLike(userId)
 
 	if err != nil {
 		log.Printf("获取喜欢列表，获取发生异常 = %v", err)

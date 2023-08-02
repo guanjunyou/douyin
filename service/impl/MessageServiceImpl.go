@@ -16,7 +16,7 @@ var chatConnMap = sync.Map{}
 type MessageServiceImpl struct {
 }
 
-func (messageService MessageServiceImpl) SendMsg(userId int64, toUserId int64, actionType int, content string) error {
+func (messageService MessageServiceImpl) SendMessage(userId int64, toUserId int64, content string) error {
 	err := models.SaveMessage(&models.Message{
 		CommonEntity: utils.NewCommonEntity(),
 		Content:      content,
@@ -58,15 +58,21 @@ func (messageService MessageServiceImpl) GetHistoryOfChat(userId int64, toUserId
 	sort.Sort(models.ByCreateTime(messageSendEvents))
 
 	var messages []models.MessageDVO
+	var wg sync.WaitGroup
 	for _, messageSendEvent := range messageSendEvents {
-		messages = append(messages, models.MessageDVO{
-			Id:         messageSendEvent.Id,
-			UserId:     messageSendEvent.UserId,
-			ToUserId:   messageSendEvent.ToUserId,
-			Content:    messageSendEvent.MsgContent,
-			CreateTime: messageSendEvent.CreateDate.Unix(),
-		})
+		wg.Add(1)
+		go func(messageSendEvent models.MessageSendEvent) {
+			defer wg.Done()
+			messages = append(messages, models.MessageDVO{
+				Id:         messageSendEvent.Id,
+				UserId:     messageSendEvent.UserId,
+				ToUserId:   messageSendEvent.ToUserId,
+				Content:    messageSendEvent.MsgContent,
+				CreateTime: messageSendEvent.CreateDate.Unix(),
+			})
+		}(messageSendEvent)
 	}
+	wg.Wait()
 	return messages, nil
 }
 
