@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-type LikeMQ struct {
+type CommentMQ struct {
 	RabbitMQ
 	channel   *amqp.Channel
 	queueName string
@@ -13,23 +13,23 @@ type LikeMQ struct {
 	key       string
 }
 
-// NewLikeRabbitMQ 获取likeMQ的对应队列。
-func NewLikeRabbitMQ() *LikeMQ {
-	likeMQ := &LikeMQ{
+// NewCommentRabbitMQ  获取commentMQ的对应管道。
+func NewCommentRabbitMQ() *CommentMQ {
+	commentMQ := &CommentMQ{
 		RabbitMQ:  *Rmq,
-		queueName: "likeMQ",
+		queueName: "commentMQ",
 	}
-	ch, err := likeMQ.conn.Channel()
-	likeMQ.channel = ch
+	ch, err := commentMQ.conn.Channel()
+	commentMQ.channel = ch
 	Rmq.failOnErr(err, "获取通道失败")
-	return likeMQ
+	return commentMQ
 }
 
-// Publish like操作的发布配置。
-func (l *LikeMQ) Publish(message string) {
+// Publish 评论操作的发布配置。
+func (commentMQ *CommentMQ) Publish(message string) {
 
-	_, err := l.channel.QueueDeclare(
-		l.queueName,
+	_, err := commentMQ.channel.QueueDeclare(
+		commentMQ.queueName,
 		//是否持久化
 		true,
 		//是否为自动删除
@@ -45,9 +45,9 @@ func (l *LikeMQ) Publish(message string) {
 		panic(err)
 	}
 
-	err1 := l.channel.Publish(
-		l.exchange,
-		l.queueName,
+	err1 := commentMQ.channel.Publish(
+		commentMQ.exchange,
+		commentMQ.queueName,
 		false,
 		false,
 		amqp.Publishing{
@@ -60,18 +60,18 @@ func (l *LikeMQ) Publish(message string) {
 
 }
 
-// Consumer like关系的消费逻辑。
-func (l *LikeMQ) Consumer() {
+// Consumer 评论关系的消费逻辑。
+func (commentMQ *CommentMQ) Consumer() {
 
-	_, err := l.channel.QueueDeclare(l.queueName, true, false, false, false, nil)
+	_, err := commentMQ.channel.QueueDeclare(commentMQ.queueName, true, false, false, false, nil)
 
 	if err != nil {
 		panic(err)
 	}
 
 	//2、接收消息
-	messages, err1 := l.channel.Consume(
-		l.queueName,
+	messages, err1 := commentMQ.channel.Consume(
+		commentMQ.queueName,
 		//用来区分多个消费者
 		"",
 		//是否自动应答
@@ -87,7 +87,7 @@ func (l *LikeMQ) Consumer() {
 	if err1 != nil {
 		panic(err1)
 	}
-	go l.consumer(messages)
+	go commentMQ.consumer(messages)
 	//forever := make(chan bool)
 	log.Println(messages)
 
@@ -96,17 +96,17 @@ func (l *LikeMQ) Consumer() {
 	//<-forever
 
 }
-func (l *LikeMQ) consumer(message <-chan amqp.Delivery) {
+func (commentMQ *CommentMQ) consumer(message <-chan amqp.Delivery) {
 	for d := range message {
 		log.Println(string(d.Body))
 	}
 }
 
-var LikeRMQ *LikeMQ
+var commentRMQ *CommentMQ
 
-// InitLikeRabbitMQ 初始化rabbitMQ连接。
-func InitLikeRabbitMQ() {
-	LikeRMQ = NewLikeRabbitMQ()
-	LikeRMQ.Publish("hello word !")
-	go LikeRMQ.Consumer()
+// InitCommentRabbitMQ  初始化rabbitMQ连接。
+func InitCommentRabbitMQ() {
+	commentRMQ = NewCommentRabbitMQ()
+	commentRMQ.Publish("hello word !")
+	go commentRMQ.Consumer()
 }
