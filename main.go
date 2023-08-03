@@ -35,4 +35,6 @@ func initDeps() {
 	utils.InitFilter()
 	mq.InitRabbitMQ()
 	mq.InitLikeRabbitMQ()
+	mq.NewCommentRabbitMQ()
+	mq.NewFollowRabbitMQ()
 }
