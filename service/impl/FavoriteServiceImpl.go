@@ -76,7 +76,6 @@ func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, vedioId int64
 
 	}
 
-	//TODO 这个  commit 后会把视频的 create_date 改了
 	tx.Commit()
 	return err
 }

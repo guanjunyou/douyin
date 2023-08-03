@@ -11,6 +11,7 @@ type Configuration struct {
 	MySQL       string            `yaml:"MySQL"`
 	VideoServer VideoServerConfig `yaml:"VideoServer"`
 	Redis       RedisConfig       `yaml:"Redis"`
+	RabbitMQ    RabbitMQConfig    `yaml:"RabbitMQ"`
 }
 
 type RedisConfig struct {
@@ -18,6 +19,13 @@ type RedisConfig struct {
 	Password string `yaml:"Password"`
 	DB       int    `yaml:"DB"`
 	PoolSize int    `yaml:"PoolSize"`
+}
+
+type RabbitMQConfig struct {
+	Addr     string `yaml:"Addr"`
+	User     string `yaml:"User"`
+	Port     string `yaml:"Port"`
+	Password string `yaml:"Password"`
 }
 
 type VideoServerConfig struct {

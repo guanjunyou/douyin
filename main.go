@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/router"
 	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
@@ -25,10 +26,13 @@ func main() {
 	SF = utils.NewSnowflake()
 	router.InitRouter1(r)
 	pprof.Register(r)
+
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
 // 加载项目依赖
 func initDeps() {
 	utils.InitFilter()
+	mq.InitRabbitMQ()
+	mq.InitLikeRabbitMQ()
 }
