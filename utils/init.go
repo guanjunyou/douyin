@@ -9,17 +9,24 @@ import (
 	"time"
 )
 
-// GetMysqlDB 需要使用数据库的时候直接创建一个连接 调用此方法即可/**
-func GetMysqlDB() *gorm.DB {
+var GORM *gorm.DB
+
+func CreateGORMDB() {
 	db, err := gorm.Open(mysql.Open(config.Config.MySQL), &gorm.Config{})
 	if err != nil {
 		log.Println("gorm Init Error : ", err)
 	}
 	sqlDb, _ := db.DB()
 	sqlDb.SetMaxOpenConns(100)
-	sqlDb.SetMaxIdleConns(10)
-	sqlDb.SetConnMaxLifetime(10 * time.Minute)
-	return db
+	sqlDb.SetMaxIdleConns(25)
+	sqlDb.SetConnMaxLifetime(1 * time.Minute)
+
+	GORM = db
+}
+
+// GetMysqlDB 需要使用数据库的时候直接创建一个连接 调用此方法即可/**
+func GetMysqlDB() *gorm.DB {
+	return GORM
 }
 
 // GetRedisDB 需要使用数据库的时候直接创建一个连接 调用此方法即可/**

@@ -22,6 +22,12 @@ type LikeVedioListDVO struct {
 	Author *User `json:"author" gorm:"foreignKey:AuthorId"`
 }
 
+type LikeMQToVideo struct {
+	UserId     int64 `json:"user_id"`
+	VideoId    int64 `json:"video_id"`
+	ActionType int   `json:"action_type"`
+}
+
 // 表名
 func (table *Like) TableName() string {
 	return "like"
@@ -47,9 +53,9 @@ func (l *Like) Delete(tx *gorm.DB) (err error) {
 }
 
 // FindByUserIdAndVedioId 通过userId和VedioId查找
-func (l *Like) FindByUserIdAndVedioId(tx *gorm.DB) (res *Like, err error) {
+func (l *Like) FindByUserIdAndVedioId() (res *Like, err error) {
 	res = &Like{}
-	err = tx.Model(Like{}).Where("video_id = ? and user_id = ? and is_deleted = 0", l.VideoId, l.UserId).Find(res).Error
+	err = utils.GetMysqlDB().Model(Like{}).Where("video_id = ? and user_id = ? and is_deleted = 0", l.VideoId, l.UserId).Find(res).Error
 	return
 }
 
@@ -65,6 +71,16 @@ func (l *Like) GetLikeVedioListDVO(userId int64) ([]LikeVedioListDVO, error) {
 	var err error
 	res := make([]LikeVedioListDVO, 0)
 	err = tx.Table("`like` l").Select("v.*").Joins(`LEFT JOIN video v ON l.video_id = v.id`).Where("l.user_id = ? and l.is_deleted = 0", userId).Preload("Author").Find(&res).Error
+
+	return res, err
+}
+
+// GetLikeVedioListDVO 查询喜欢的视频Id
+func (l *Like) GetLikeVedioIdList(userId int64) ([]int64, error) {
+	tx := utils.GetMysqlDB()
+	var err error
+	res := make([]int64, 0)
+	err = tx.Table(l.TableName()).Select("id").Where("user_id = ? and is_deleted = 0", userId).Find(&res).Error
 
 	return res, err
 }

@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"github.com/RaymondCode/simple-demo/models"
 	"github.com/streadway/amqp"
 	"log"
 )
@@ -11,6 +12,14 @@ type LikeMQ struct {
 	queueName string
 	exchange  string
 	key       string
+}
+
+// 初始化 channel
+var LikeChannel chan models.LikeMQToVideo
+
+func MakeLikeChannel() {
+	ch := make(chan models.LikeMQToVideo)
+	LikeChannel = ch
 }
 
 // NewLikeRabbitMQ 获取likeMQ的对应队列。

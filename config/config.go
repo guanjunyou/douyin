@@ -49,6 +49,7 @@ var (
 	// redis
 	TokenTTL float64 = 3600
 	TokenKey string  = "token:"
+	LikeKey  string  = "Like:"
 
 	//filter
 	WordDictPath = "./public/sensitiveDict.txt"

@@ -26,7 +26,7 @@ func main() {
 	SF = utils.NewSnowflake()
 	router.InitRouter1(r)
 	pprof.Register(r)
-
+	utils.CreateGORMDB()
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
@@ -35,6 +35,8 @@ func initDeps() {
 	utils.InitFilter()
 	mq.InitRabbitMQ()
 	mq.InitLikeRabbitMQ()
-	mq.NewCommentRabbitMQ()
-	mq.NewFollowRabbitMQ()
+	mq.InitCommentRabbitMQ()
+	mq.InitFollowRabbitMQ()
+	mq.MakeLikeChannel()
+	impl.MakeLikeGroutine()
 }
