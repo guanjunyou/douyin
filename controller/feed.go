@@ -29,6 +29,7 @@ func GetVideoService() impl.VideoServiceImpl {
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
+	//go mq.LikeRMQ.Publish("hello world")
 	latestTimeStr := c.Query("latest_time")
 	token := c.Query("token")
 	var userId int64 = -1
