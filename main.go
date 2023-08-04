@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/controller"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/router"
 	"github.com/RaymondCode/simple-demo/service/impl"
@@ -39,4 +40,6 @@ func initDeps() {
 	mq.InitFollowRabbitMQ()
 	mq.MakeLikeChannel()
 	impl.MakeLikeGroutine()
+	controller.GetVideoService().MakeLikeConsumers()
+	controller.GetUserService().MakeLikeConsumers()
 }

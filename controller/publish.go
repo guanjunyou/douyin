@@ -29,7 +29,7 @@ func Publish(c *gin.Context) {
 	}
 	title := c.PostForm("title")
 	//2. 调用service层处理业务逻辑
-	err = GetVideoService().Publish(data, userId, title, c)
+	err = GetVideoService().Publish(data, userId, title)
 	if err != nil {
 		c.JSON(http.StatusOK, models.Response{
 			StatusCode: 1,

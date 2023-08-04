@@ -33,7 +33,7 @@ func (table *Video) TableName() string {
 	return "video"
 }
 
-// 在 model 层禁止操作除了数据库实体类外的其它类！ 禁止调用其它model或者service!
+// GetVideoListByLastTime 在 model 层禁止操作除了数据库实体类外的其它类！ 禁止调用其它model或者service!
 func GetVideoListByLastTime(latestTime time.Time) ([]Video, error) {
 	videolist := make([]Video, config.VideoCount)
 	err := utils.GetMysqlDB().Where("is_deleted != ? AND create_date < ? ", 1, latestTime).Order("create_date desc").Limit(config.VideoCount).Find(&videolist).Error
@@ -56,4 +56,14 @@ func GetVediosByUserId(userId int64) ([]Video, error) {
 		return nil, err
 	}
 	return vedios, nil
+}
+
+func GetVideoById(videoId int64) (Video, error) {
+	var video Video
+	err := utils.GetMysqlDB().First(&video, videoId).Error
+	return video, err
+}
+
+func UpdateVideo(video Video) {
+	utils.GetMysqlDB().Save(&video)
 }
