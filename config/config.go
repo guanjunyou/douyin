@@ -47,9 +47,13 @@ var (
 	VideoCount  = 5
 	BufferSize  = 1000
 	// redis
-	TokenTTL float64 = 3600
-	TokenKey string  = "token:"
-	LikeKey  string  = "Like:"
+	TokenTTL    float64 = 3600
+	TokenKey    string  = "token:"
+	LikeKey     string  = "Like:"
+	LikeKeyTTL  float64 = 3600
+	LikeLock    string  = "likeLock"
+	UnLikeLock  string  = "unLikeLock"
+	LikeLockTTL float64 = 60
 
 	//filter
 	WordDictPath = "./public/sensitiveDict.txt"
