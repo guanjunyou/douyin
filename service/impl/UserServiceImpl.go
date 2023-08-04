@@ -186,27 +186,23 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 	for d := range message {
 		jsonData := string(d.Body)
 		log.Printf("user收到的消息为 %s\n", jsonData)
-		data := models.LikeMQToVideo{}
+		data := models.LikeMQToUser{}
 		err := json.Unmarshal([]byte(jsonData), &data)
 		if err != nil {
 			panic(err)
 		}
 		userId := data.UserId
+		tx := utils.GetMysqlDB().Begin()
 		//获得当前用户
 		user, err := models.GetUserById(userId)
-		videoId := data.VideoId
-		//检索点赞视频
-		video, err1 := models.GetVideoById(videoId)
-		if err1 != nil {
-			panic(err1)
-		}
+
 		//查询视频作者
-		author, err2 := models.GetUserById(video.AuthorId)
+		author, err2 := models.GetUserById(data.AuthorId)
 		if err2 != nil {
 			panic(err2)
 		}
 		actionType := data.ActionType
-		tx := utils.GetMysqlDB().Begin()
+
 		if actionType == 1 {
 			//喜欢数量+一
 			user.FavoriteCount = user.FavoriteCount + 1

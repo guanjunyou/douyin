@@ -45,6 +45,5 @@ func initDeps() {
 	mq.InitFollowRabbitMQ()
 	mq.MakeLikeChannel()
 	impl.MakeLikeGroutine()
-	controller.GetVideoService().MakeLikeConsumers()
 	controller.GetUserService().MakeLikeConsumers()
 }

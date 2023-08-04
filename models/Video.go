@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/utils"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -64,6 +65,6 @@ func GetVideoById(videoId int64) (Video, error) {
 	return video, err
 }
 
-func UpdateVideo(video Video) {
-	utils.GetMysqlDB().Save(&video)
+func UpdateVideo(tx *gorm.DB, video Video) {
+	tx.Save(&video)
 }

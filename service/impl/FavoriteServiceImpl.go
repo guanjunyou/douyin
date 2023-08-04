@@ -81,7 +81,16 @@ func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, videoId int64
 		//	//tx.Rollback()
 		//	return err
 		//}
-		mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		// 查视频的作者
+		author, errAuthorId := models.GetVideoById(videoId)
+		if errAuthorId != nil {
+			log.Println("不能找到这个作者")
+			return errAuthorId
+		}
+		authorId := author.AuthorId
+
+		//mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		mqData := models.LikeMQToUser{UserId: userId, VideoId: videoId, ActionType: actionType, AuthorId: authorId}
 		// 加入 channel
 		mq.LikeChannel <- mqData
 		jsonData, err := json.Marshal(mqData)
@@ -114,8 +123,16 @@ func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, videoId int64
 		//	tx.Rollback()
 		//	return err
 		//}
+		// 查视频的作者
+		author, errAuthorId := models.GetVideoById(videoId)
+		if errAuthorId != nil {
+			log.Println("不能找到这个作者")
+			return errAuthorId
+		}
+		authorId := author.AuthorId
 
-		mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		//mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		mqData := models.LikeMQToUser{UserId: userId, VideoId: videoId, ActionType: actionType, AuthorId: authorId}
 		// 加入 channel
 		mq.LikeChannel <- mqData
 		jsonData, err := json.Marshal(mqData)
@@ -179,12 +196,12 @@ func (favoriteService FavoriteServiceImpl) FindIsFavouriteByUserIdAndVideoId(use
 	}
 }
 
-func LikeConsumer(ch <-chan models.LikeMQToVideo) {
+func LikeConsumer(ch <-chan models.LikeMQToUser) {
 	for {
 		select {
 		case msg := <-ch:
 			// 在这里处理接收到的消息
-			tx := utils.GetMysqlDB()
+			tx := utils.GetMysqlDB().Begin()
 			if msg.ActionType == 1 {
 				like := models.Like{
 					CommonEntity: utils.NewCommonEntity(),
@@ -196,12 +213,14 @@ func LikeConsumer(ch <-chan models.LikeMQToVideo) {
 					log.Printf(err1.Error())
 					tx.Rollback()
 				}
-				// 交给消息队列来做
-				//err2 := findVideoAndUpdateFavoriteCount(tx, msg.VideoId, 1)
-				//if err2 != nil {
-				//	log.Printf(err2.Error())
-				//	tx.Rollback()
-				//}
+				video, err2 := models.GetVideoById(msg.VideoId)
+				if err2 != nil {
+					log.Printf(err2.Error())
+					tx.Rollback()
+				}
+				video.FavoriteCount++
+				models.UpdateVideo(tx, video)
+				tx.Commit()
 
 				userIdStr := strconv.FormatInt(msg.UserId, 10)
 				videoIdStr := strconv.FormatInt(msg.VideoId, 10)
@@ -225,18 +244,22 @@ func LikeConsumer(ch <-chan models.LikeMQToVideo) {
 				}
 				findLike, err := like.FindByUserIdAndVedioId()
 				if err != nil {
-					tx.Commit()
+					tx.Rollback()
 				}
 				err1 := findLike.Delete(tx)
 				if err1 != nil {
 					log.Printf(err1.Error())
 					tx.Rollback()
 				}
-				//err2 := findVideoAndUpdateFavoriteCount(tx, msg.VideoId, -1)
-				//if err2 != nil {
-				//	log.Printf(err2.Error())
-				//	tx.Rollback()
-				//}
+				video, err2 := models.GetVideoById(msg.VideoId)
+				if err2 != nil {
+					log.Printf(err2.Error())
+					tx.Rollback()
+				}
+				//TODO 防止减到负数
+				video.FavoriteCount--
+				models.UpdateVideo(tx, video)
+				tx.Commit()
 
 				userIdStr := strconv.FormatInt(msg.UserId, 10)
 				videoIdStr := strconv.FormatInt(msg.VideoId, 10)
