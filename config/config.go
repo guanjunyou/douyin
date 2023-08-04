@@ -45,7 +45,7 @@ var (
 	DefaultPage = "1"
 	DefaultSize = "20"
 	VideoCount  = 5
-
+	BufferSize  = 1000
 	// redis
 	TokenTTL float64 = 3600
 	TokenKey string  = "token:"

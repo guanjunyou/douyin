@@ -1,11 +1,14 @@
 package impl
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/streadway/amqp"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -146,6 +149,111 @@ func (userService UserServiceImpl) Login(username string, password string, c *gi
 	return nil
 }
 
+// LikeConsume  消费"userLikeMQ"中的消息
+func (userService UserServiceImpl) LikeConsume(l *mq.LikeMQ) {
+	_, err := l.Channel.QueueDeclare(l.QueueUserName, true, false, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
+	//2、接收消息
+	messages, err1 := l.Channel.Consume(
+		l.QueueUserName,
+		//用来区分多个消费者
+		"",
+		//是否自动应答
+		true,
+		//是否具有排他性
+		false,
+		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
+		false,
+		//消息队列是否阻塞
+		false,
+		nil,
+	)
+	if err1 != nil {
+		panic(err1)
+	}
+	go userService.likeConsume(messages)
+	//forever := make(chan bool)
+	//log.Println(messages)
+
+	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
+}
+
+// 具体消费逻辑
+// TODO  实现User与Video的解耦
+func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
+	for d := range message {
+		jsonData := string(d.Body)
+		log.Printf("user收到的消息为 %s\n", jsonData)
+		data := models.LikeMQToVideo{}
+		err := json.Unmarshal([]byte(jsonData), &data)
+		if err != nil {
+			panic(err)
+		}
+		userId := data.UserId
+		//获得当前用户
+		user, err := models.GetUserById(userId)
+		videoId := data.VideoId
+		//检索点赞视频
+		video, err1 := models.GetVideoById(videoId)
+		if err1 != nil {
+			panic(err1)
+		}
+		//查询视频作者
+		author, err2 := models.GetUserById(video.AuthorId)
+		if err2 != nil {
+			panic(err2)
+		}
+		actionType := data.ActionType
+		tx := utils.GetMysqlDB().Begin()
+		if actionType == 1 {
+			//喜欢数量+一
+			user.FavoriteCount = user.FavoriteCount + 1
+			err = models.UpdateUser(tx, user)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+			//总点赞数+1
+			author.TotalFavorited = author.TotalFavorited + 1
+			err = models.UpdateUser(tx, author)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+
+		} else {
+			//喜欢数量-1
+			user.FavoriteCount = user.FavoriteCount - 1
+			err = models.UpdateUser(tx, user)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+			//总点赞数-1
+			author.TotalFavorited = author.TotalFavorited - 1
+			err = models.UpdateUser(tx, author)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+		}
+		tx.Commit()
+	}
+}
+
+// 创建消费者协程
+func (userService UserServiceImpl) MakeLikeConsumers() {
+	numConsumers := 20
+	for i := 0; i < numConsumers; i++ {
+		go userService.LikeConsume(mq.LikeRMQ)
+	}
+}
 func (userService UserServiceImpl) UserInfo(userId int64, token string) (*models.User, error) {
 	//userClaims, err := utils.AnalyseToken(token)
 	//if err != nil || userClaims == nil {

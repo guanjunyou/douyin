@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/RaymondCode/simple-demo/utils"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -52,6 +53,7 @@ func SaveUser(user User) error {
 	return utils.GetMysqlDB().Create(&user).Error
 }
 
-func UpdateUser(user User) {
-	utils.GetMysqlDB().Save(&user)
+func UpdateUser(tx *gorm.DB, user User) error {
+	err := tx.Save(&user).Error
+	return err
 }

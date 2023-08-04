@@ -1,12 +1,15 @@
 package impl
 
 import (
+	"encoding/json"
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/service"
 	"github.com/RaymondCode/simple-demo/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
+	"github.com/streadway/amqp"
+	"log"
 	"mime/multipart"
 	"path/filepath"
 	"sync"
@@ -84,7 +87,7 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 
 // Publish 投稿接口
 // TODO 借助redis协助实现feed流
-func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId int64, title string, c *gin.Context) error {
+func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId int64, title string) error {
 	//从title中过滤敏感词汇
 	replaceTitle := utils.Filter.Replace(title, '#')
 	//文件名
@@ -121,7 +124,10 @@ func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId 
 	}
 	//用户发布作品数加1
 	user.WorkCount = user.WorkCount + 1
-	models.UpdateUser(user)
+	err = models.UpdateUser(utils.GetMysqlDB(), user)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -162,4 +168,70 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 		return nil, err0
 	}
 	return VideoDVOList, nil
+}
+
+// LikeConsume  消费"videoLikeMQ"中的消息
+func (videoService VideoServiceImpl) LikeConsume(l *mq.LikeMQ) {
+	_, err := l.Channel.QueueDeclare(l.QueueVideoName, true, false, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
+	//2、接收消息
+	messages, err1 := l.Channel.Consume(
+		l.QueueVideoName,
+		//用来区分多个消费者
+		"",
+		//是否自动应答
+		true,
+		//是否具有排他性
+		false,
+		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
+		false,
+		//消息队列是否阻塞
+		false,
+		nil,
+	)
+	if err1 != nil {
+		panic(err1)
+	}
+	go videoService.likeConsume(messages)
+	//forever := make(chan bool)
+	//log.Println(messages)
+
+	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
+}
+
+// 具体消费逻辑
+func (videoService VideoServiceImpl) likeConsume(message <-chan amqp.Delivery) {
+	for d := range message {
+		jsonData := string(d.Body)
+		log.Printf("video收到的消息为 %s\n", jsonData)
+		data := models.LikeMQToVideo{}
+		err := json.Unmarshal([]byte(jsonData), &data)
+		if err != nil {
+			panic(err)
+		}
+		videoId := data.VideoId
+		//检索点赞视频
+		video, err1 := models.GetVideoById(videoId)
+		if err1 != nil {
+			panic(err1)
+		}
+		actionType := data.ActionType
+		if actionType == 1 {
+			video.FavoriteCount = video.FavoriteCount + 1
+			models.UpdateVideo(video)
+		} else {
+			video.FavoriteCount = video.FavoriteCount - 1
+			models.UpdateVideo(video)
+		}
+	}
+}
+
+// 创建消费者协程
+func (videoService VideoServiceImpl) MakeLikeConsumers() {
+	numConsumers := 20
+	for i := 0; i < numConsumers; i++ {
+		go videoService.LikeConsume(mq.LikeRMQ)
+	}
 }
