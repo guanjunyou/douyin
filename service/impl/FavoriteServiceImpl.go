@@ -23,18 +23,39 @@ type FavoriteServiceImpl struct {
 
 // LikeVedio 点赞或者取消点赞
 func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, videoId int64, actionType int) error {
+	//分布式锁 不能让用户连续两次点赞或者取消同一个视频的请求进入
+	userIdStr := strconv.FormatInt(userId, 10)
+	videoIdStr := strconv.FormatInt(videoId, 10)
+
+	lockKey := config.LikeLock + userIdStr + videoIdStr
+	unLockKey := config.UnLikeLock + userIdStr + videoIdStr
+
+	if actionType == 1 {
+		isSuccess, _ := utils.GetRedisDB().SetNX(context.Background(), lockKey, "0", time.Duration(config.LikeLockTTL)*time.Second).Result()
+		if isSuccess == false {
+			log.Println("已点赞")
+			return errors.New("-1")
+		} else {
+			utils.GetRedisDB().Del(context.Background(), unLockKey)
+		}
+	} else {
+		isSuccess, _ := utils.GetRedisDB().SetNX(context.Background(), unLockKey, "0", time.Duration(config.LikeLockTTL)*time.Second).Result()
+		if isSuccess == false {
+			log.Println("已取消")
+			return errors.New("-2")
+		} else {
+			utils.GetRedisDB().Del(context.Background(), lockKey)
+		}
+	}
 	var err error
 	//tx := utils.GetMysqlDB().Begin()
 	l := models.Like{
 		UserId:  userId,
 		VideoId: videoId,
 	}
-
 	var faInDB *(models.Like)
 
 	var isExists bool = false
-	userIdStr := strconv.FormatInt(userId, 10)
-	videoIdStr := strconv.FormatInt(videoId, 10)
 	userLikeKey := config.LikeKey + userIdStr
 	// 看看缓存中有没有这个集合
 	exits, _ := utils.GetRedisDB().Exists(context.Background(), userLikeKey).Result()
@@ -142,6 +163,7 @@ func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, videoId int64
 		}
 		//加入消息队列
 		mq.LikeRMQ.Publish(string(jsonData))
+		// TODO 消息队列处理失败会导致数据不一致
 
 		return nil
 
@@ -290,6 +312,10 @@ func BuildLikeRedis(userId int64) error {
 
 	ctx := context.Background()
 	err = utils.GetRedisDB().SAdd(ctx, likeSetKey, strValues).Err()
+	errSetTime := utils.GetRedisDB().Expire(ctx, likeSetKey, time.Duration(config.LikeKeyTTL)*time.Second).Err()
+	if errSetTime != nil {
+		log.Println("redis 时间设置失败", errSetTime.Error())
+	}
 	return err
 }
 
