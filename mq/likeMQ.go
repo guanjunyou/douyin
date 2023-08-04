@@ -16,10 +16,11 @@ type LikeMQ struct {
 }
 
 // 初始化 channel
-var LikeChannel chan models.LikeMQToVideo
+// var LikeChannel chan models.LikeMQToVideo
+var LikeChannel chan models.LikeMQToUser
 
 func MakeLikeChannel() {
-	ch := make(chan models.LikeMQToVideo, config.BufferSize)
+	ch := make(chan models.LikeMQToUser, config.BufferSize)
 	LikeChannel = ch
 }
 
