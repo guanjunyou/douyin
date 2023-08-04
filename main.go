@@ -10,6 +10,8 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"log"
+	"net/http"
 )
 
 var SF *utils.Snowflake
@@ -28,6 +30,9 @@ func main() {
 	router.InitRouter1(r)
 	pprof.Register(r)
 	utils.CreateGORMDB()
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 

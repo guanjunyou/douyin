@@ -8,7 +8,6 @@ import (
 type UserClaims struct {
 	CommonEntity
 	Name string `json:"name"`
-	//IsAdmin  int    `json:"is_admin"`
 	jwt.StandardClaims
 }
 
