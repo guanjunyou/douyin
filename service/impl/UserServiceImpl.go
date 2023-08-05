@@ -206,24 +206,34 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 		if actionType == 1 {
 			//喜欢数量+一
 			user.FavoriteCount = user.FavoriteCount + 1
+			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
+			if user.Id == author.Id {
+				user.TotalFavorited++
+			}
 			err = models.UpdateUser(tx, user)
 			if err != nil {
 				log.Println("err:", err)
 				tx.Rollback()
 				panic(err)
 			}
-			//总点赞数+1
-			author.TotalFavorited = author.TotalFavorited + 1
-			err = models.UpdateUser(tx, author)
-			if err != nil {
-				log.Println("err:", err)
-				tx.Rollback()
-				panic(err)
+			if user.Id != author.Id {
+				//总点赞数+1
+				author.TotalFavorited = author.TotalFavorited + 1
+				err = models.UpdateUser(tx, author)
+				if err != nil {
+					log.Println("err:", err)
+					tx.Rollback()
+					panic(err)
+				}
 			}
 
 		} else {
 			//喜欢数量-1
 			user.FavoriteCount = user.FavoriteCount - 1
+			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
+			if user.Id == author.Id {
+				user.TotalFavorited--
+			}
 			err = models.UpdateUser(tx, user)
 			if err != nil {
 				log.Println("err:", err)
@@ -231,12 +241,14 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 				panic(err)
 			}
 			//总点赞数-1
-			author.TotalFavorited = author.TotalFavorited - 1
-			err = models.UpdateUser(tx, author)
-			if err != nil {
-				log.Println("err:", err)
-				tx.Rollback()
-				panic(err)
+			if user.Id != author.Id {
+				author.TotalFavorited = author.TotalFavorited - 1
+				err = models.UpdateUser(tx, author)
+				if err != nil {
+					log.Println("err:", err)
+					tx.Rollback()
+					panic(err)
+				}
 			}
 		}
 		tx.Commit()
