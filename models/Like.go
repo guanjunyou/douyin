@@ -87,7 +87,7 @@ func (l *Like) GetLikeVedioIdList(userId int64) ([]int64, error) {
 	tx := utils.GetMysqlDB()
 	var err error
 	res := make([]int64, 0)
-	err = tx.Table(l.TableName()).Select("id").Where("user_id = ? and is_deleted = 0", userId).Find(&res).Error
+	err = tx.Table(l.TableName()).Select("video_id").Where("user_id = ? and is_deleted = 0", userId).Find(&res).Error
 
 	return res, err
 }
