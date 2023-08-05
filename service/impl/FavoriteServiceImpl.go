@@ -9,6 +9,7 @@ import (
 	"github.com/RaymondCode/simple-demo/mq"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/RaymondCode/simple-demo/models"
@@ -194,17 +195,58 @@ func (favoriteService FavoriteServiceImpl) QueryVideosOfLike(userId int64) ([]mo
 	exists, _ := utils.GetRedisDB().Exists(context.Background(), likeKey).Result()
 	if exists != 0 {
 		likeIdsSet, _ := utils.GetRedisDB().SMembers(context.Background(), likeKey).Result()
+		/*		var res []models.LikeVedioListDVO
+
+				for i := range likeIdsSet {
+					id, _ := strconv.ParseInt(likeIdsSet[i], 10, 64)
+					video, _ := models.GetVideoById(id)
+					author, _ := models.GetUserById(video.AuthorId)
+					var likeVideoListDVO models.LikeVedioListDVO
+					likeVideoListDVO.Author = &author
+					likeVideoListDVO.Video = video
+					res = append(res, likeVideoListDVO)
+				}
+		*/
 		var res []models.LikeVedioListDVO
+		var wg sync.WaitGroup
+		var mu sync.Mutex // 用于保护 res 的并发访问
+		var errReturn error
 
 		for i := range likeIdsSet {
-			id, _ := strconv.ParseInt(likeIdsSet[i], 10, 64)
-			video, _ := models.GetVideoById(id)
-			author, _ := models.GetUserById(video.AuthorId)
-			var likeVideoListDVO models.LikeVedioListDVO
-			likeVideoListDVO.Author = &author
-			likeVideoListDVO.Video = video
-			res = append(res, likeVideoListDVO)
+			wg.Add(1)
+			//协程并发组装
+			go func(idStr string) {
+				defer wg.Done()
+
+				id, _ := strconv.ParseInt(idStr, 10, 64)
+
+				video, err := models.GetVideoById(id)
+				if err != nil {
+					errReturn = err
+				}
+
+				author, err := models.GetUserById(video.AuthorId)
+				if err != nil {
+					errReturn = err
+				}
+
+				var likeVideoListDVO models.LikeVedioListDVO
+				likeVideoListDVO.Author = &author
+				likeVideoListDVO.Video = video
+				// 使用锁保护 res 的并发访问
+				mu.Lock()
+				res = append(res, likeVideoListDVO)
+				mu.Unlock()
+			}(likeIdsSet[i])
 		}
+		// 等待所有协程完成
+		wg.Wait()
+
+		if errReturn != nil {
+			return []models.LikeVedioListDVO{}, errReturn
+		}
+		// 现在 res 包含了所有视频的作者和视频信息
+
 		return res, nil
 	}
 
@@ -214,6 +256,7 @@ func (favoriteService FavoriteServiceImpl) QueryVideosOfLike(userId int64) ([]mo
 	var err error
 	res, err = l.GetLikeVedioListDVO(userId)
 
+	// 重建缓存
 	_ = BuildLikeRedis(userId)
 	if err != nil {
 		return res, err

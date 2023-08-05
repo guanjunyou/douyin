@@ -54,6 +54,8 @@ var (
 	LikeLock    string  = "likeLock"
 	UnLikeLock  string  = "unLikeLock"
 	LikeLockTTL float64 = 60
+	UserKey     string  = "user:"
+	UsedrKeyTTL float64 = 3600
 
 	//filter
 	WordDictPath = "./public/sensitiveDict.txt"
