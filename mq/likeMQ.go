@@ -78,31 +78,31 @@ func (l *LikeMQ) Publish(message string) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = l.Channel.QueueDeclare(
-		l.QueueVideoName,
-		//是否持久化
-		true,
-		//是否为自动删除
-		false,
-		//是否具有排他性
-		false,
-		//是否阻塞
-		false,
-		//额外属性
-		nil,
-	)
-	if err != nil {
-		panic(err)
-	}
+	//_, err = l.Channel.QueueDeclare(
+	//	l.QueueVideoName,
+	//	//是否持久化
+	//	true,
+	//	//是否为自动删除
+	//	false,
+	//	//是否具有排他性
+	//	false,
+	//	//是否阻塞
+	//	false,
+	//	//额外属性
+	//	nil,
+	//)
+	//if err != nil {
+	//	panic(err)
+	//}
 	//绑定队列和交换机
 	err = l.Channel.QueueBind(l.QueueUserName, "", l.exchange, false, nil)
 	if err != nil {
 		panic(err)
 	}
-	err = l.Channel.QueueBind(l.QueueVideoName, "", l.exchange, false, nil)
-	if err != nil {
-		panic(err)
-	}
+	//err = l.Channel.QueueBind(l.QueueVideoName, "", l.exchange, false, nil)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	err1 := l.Channel.Publish(
 		l.exchange,
