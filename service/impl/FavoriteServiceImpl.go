@@ -63,7 +63,7 @@ func (favoriteService FavoriteServiceImpl) LikeVideo(userId int64, videoId int64
 		// 看看这个集合中有没有这个ID
 		result, _ := utils.GetRedisDB().SIsMember(context.Background(), userLikeKey, videoIdStr).Result()
 		isExists = result
-		// 如果缓存里面的 Set 里面没有就要从数据库里面查
+		// 如果缓存里面的 Set 里面没有就要从数据库Z]里面查
 		if !isExists {
 			faInDB, err = l.FindByUserIdAndVedioId()
 			if err != nil {
@@ -190,11 +190,31 @@ func findVideoAndUpdateFavoriteCount(tx *gorm.DB, vid int64, count int64) (err e
 }
 
 func (favoriteService FavoriteServiceImpl) QueryVideosOfLike(userId int64) ([]models.LikeVedioListDVO, error) {
+	likeKey := config.LikeKey + strconv.FormatInt(userId, 10)
+	exists, _ := utils.GetRedisDB().Exists(context.Background(), likeKey).Result()
+	if exists != 0 {
+		likeIdsSet, _ := utils.GetRedisDB().SMembers(context.Background(), likeKey).Result()
+		var res []models.LikeVedioListDVO
+
+		for i := range likeIdsSet {
+			id, _ := strconv.ParseInt(likeIdsSet[i], 10, 64)
+			video, _ := models.GetVideoById(id)
+			author, _ := models.GetUserById(video.AuthorId)
+			var likeVideoListDVO models.LikeVedioListDVO
+			likeVideoListDVO.Author = &author
+			likeVideoListDVO.Video = video
+			res = append(res, likeVideoListDVO)
+		}
+		return res, nil
+	}
+
 	var l models.Like
+
 	var res []models.LikeVedioListDVO
 	var err error
 	res, err = l.GetLikeVedioListDVO(userId)
 
+	_ = BuildLikeRedis(userId)
 	if err != nil {
 		return res, err
 	}
@@ -204,6 +224,13 @@ func (favoriteService FavoriteServiceImpl) QueryVideosOfLike(userId int64) ([]mo
 
 func (favoriteService FavoriteServiceImpl) FindIsFavouriteByUserIdAndVideoId(userId int64, videoId int64) bool {
 	//tx := utils.GetMysqlDB()
+	likeKey := config.LikeKey + strconv.FormatInt(userId, 10)
+	videoIdStr := strconv.FormatInt(videoId, 10)
+	exists, _ := utils.GetRedisDB().Exists(context.Background(), likeKey).Result()
+	if exists != 0 {
+		videoExists, _ := utils.GetRedisDB().SIsMember(context.Background(), likeKey, videoIdStr).Result()
+		return videoExists
+	}
 	like := models.Like{
 		UserId:  userId,
 		VideoId: videoId,
@@ -306,8 +333,8 @@ func BuildLikeRedis(userId int64) error {
 	userIdStr := strconv.FormatInt(userId, 10)
 	likeSetKey := config.LikeKey + userIdStr
 	var strValues []string
-	for id := range idSet {
-		strValues = append(strValues, strconv.FormatInt(int64(id), 10))
+	for i := range idSet {
+		strValues = append(strValues, strconv.FormatInt(idSet[i], 10))
 	}
 
 	ctx := context.Background()
