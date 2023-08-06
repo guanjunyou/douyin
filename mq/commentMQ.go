@@ -1,6 +1,8 @@
 package mq
 
 import (
+	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/models"
 	"github.com/streadway/amqp"
 	"log"
 )
@@ -11,6 +13,13 @@ type CommentMQ struct {
 	queueName string
 	exchange  string
 	key       string
+}
+
+var CommentChannel chan models.CommentMQToVideo
+
+func MakeCommentChannel() {
+	ch := make(chan models.CommentMQToVideo, config.BufferSize)
+	CommentChannel = ch
 }
 
 // NewCommentRabbitMQ  获取commentMQ的对应管道。

@@ -27,6 +27,32 @@ func (a ByCreateDate) Less(i, j int) bool {
 	return a[i].CreateDate.Compare(a[j].CreateDate) > 0
 }
 
+type CommentMQToVideo struct {
+	utils.CommonEntity
+	ActionType int    `json:"action_type"`
+	UserId     User   `json:"user"`
+	VideoId    int64  `json:"video_id"`
+	Content    string `json:"content"`
+	CommentID  int64  `json:"id"`
+}
+
+func (comment *CommentMQToVideo) ToCommentDB() CommentDB {
+	return CommentDB{
+		CommonEntity: comment.CommonEntity,
+		UserId:       comment.UserId.Id,
+		VideoId:      comment.VideoId,
+		Content:      comment.Content,
+	}
+}
+
+func (comment *CommentMQToVideo) ToComment() Comment {
+	return Comment{
+		CommonEntity: comment.CommonEntity,
+		User:         comment.UserId,
+		Content:      comment.Content,
+	}
+}
+
 // CommentDB是数据库储存的Entity
 type CommentDB struct {
 	utils.CommonEntity
@@ -34,6 +60,15 @@ type CommentDB struct {
 	UserId  int64  `json:"user_id"`
 	VideoId int64  `json:"video_id"`
 	Content string `json:"content,omitempty"`
+}
+
+func (comment *CommentDB) ToComment() Comment {
+	user, _ := GetUserById(comment.UserId)
+	return Comment{
+		CommonEntity: comment.CommonEntity,
+		User:         user,
+		Content:      comment.Content,
+	}
 }
 
 func (comment *Comment) ToCommentDB() CommentDB {
@@ -95,19 +130,19 @@ func DeleteComment(commentId int64) error {
 	return tx.Commit().Error
 }
 
+func GetCommentDBById(commentId int64) (CommentDB, error) {
+	var commentDB CommentDB
+	err := utils.GetMysqlDB().Where("id = ? AND is_deleted != ?", commentId, 1).First(&commentDB).Error
+	if err != nil {
+		return commentDB, err
+	}
+	return commentDB, nil
+}
+
 func GetCommentByVideoId(videoId int64) []Comment {
 	var comments []Comment
 	var commentDBs []CommentDB
 	// 找到对应User
-	GetUser := func(Id int64) (User, error) {
-		var user User
-
-		err := utils.GetMysqlDB().Where("id = ? AND is_deleted != ?", Id, 1).First(&user).Error
-		if err != nil {
-			return user, err
-		}
-		return user, nil
-	}
 
 	err := utils.GetMysqlDB().Debug().Where("video_id = ? AND is_deleted != ?", strconv.Itoa(int(videoId)), 1).Find(&commentDBs).Error
 	if err != nil {
@@ -119,15 +154,8 @@ func GetCommentByVideoId(videoId int64) []Comment {
 	}
 
 	for _, commentDB := range commentDBs {
-		user, err := GetUser(commentDB.UserId)
-		if err != nil {
-			user = User{Name: "未知用户"}
-		}
-		comments = append(comments, Comment{
-			CommonEntity: commentDB.CommonEntity,
-			User:         user,
-			Content:      commentDB.Content,
-		})
+
+		comments = append(comments, commentDB.ToComment())
 	}
 	return comments
 }
