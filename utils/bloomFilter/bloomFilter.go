@@ -1,4 +1,4 @@
-package utils
+package bloomFilter
 
 import (
 	"github.com/RaymondCode/simple-demo/models"

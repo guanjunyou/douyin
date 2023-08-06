@@ -7,6 +7,7 @@ import (
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
+	"github.com/RaymondCode/simple-demo/utils/bloomFilter"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"strconv"
@@ -22,7 +23,7 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 		return err
 	}
 
-	utils.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
+	bloomFilter.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
 
 	toMQ := models.CommentMQToVideo{
 		CommonEntity: comment.CommonEntity,
@@ -40,7 +41,7 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Comment {
 	rdb := utils.GetRedisDB()
 
-	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(videoId))))
+	exist := bloomFilter.BloomFilter.Test([]byte(strconv.Itoa(int(videoId))))
 	if !exist {
 		return nil
 	}
@@ -101,13 +102,13 @@ func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Com
 func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	rdb := utils.GetRedisDB()
 
-	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(commentId))))
+	exist := bloomFilter.BloomFilter.Test([]byte(strconv.Itoa(int(commentId))))
 	if !exist {
 		return errors.New("comment id not exist")
 	}
 
 	//check id exist
-	commentExistKey := "commentID:" + strconv.Itoa(int(commentId))
+	commentExistKey := "comment:" + strconv.Itoa(int(commentId))
 	if (rdb.Exists(context.Background(), commentExistKey)).Val() == 0 {
 		_, err := models.GetCommentDBById(commentId)
 		if err != nil {
@@ -128,7 +129,7 @@ func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	return nil
 }
 
-func CommentActionConsumer() {
+func commentActionConsumer() {
 	for {
 		select {
 		case commentMQ := <-mq.CommentChannel:
@@ -144,7 +145,7 @@ func CommentActionConsumer() {
 				//save to redis
 				rdb := utils.GetRedisDB()
 				//set comment id
-				commentExistKey := "commentID:" + strconv.Itoa(int(commentDB.Id))
+				commentExistKey := "comment:" + strconv.Itoa(int(commentDB.Id))
 				//set comment to video
 				rdb.ZAdd(context.Background(), strconv.Itoa(int(commentDB.VideoId)), &redis.Z{
 					Score:  float64(commentDB.CreateDate.Unix()),
@@ -175,6 +176,6 @@ func CommentActionConsumer() {
 func MakeCommentGoroutine() {
 	numConsumer := 20
 	for i := 0; i < numConsumer; i++ {
-		go CommentActionConsumer()
+		go commentActionConsumer()
 	}
 }
