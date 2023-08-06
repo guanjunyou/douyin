@@ -108,7 +108,7 @@ func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	}
 
 	//check id exist
-	commentExistKey := "commentID:" + strconv.Itoa(int(commentId))
+	commentExistKey := "comment:" + strconv.Itoa(int(commentId))
 	if (rdb.Exists(context.Background(), commentExistKey)).Val() == 0 {
 		_, err := models.GetCommentDBById(commentId)
 		if err != nil {
@@ -129,7 +129,7 @@ func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	return nil
 }
 
-func CommentActionConsumer() {
+func commentActionConsumer() {
 	for {
 		select {
 		case commentMQ := <-mq.CommentChannel:
@@ -145,7 +145,7 @@ func CommentActionConsumer() {
 				//save to redis
 				rdb := utils.GetRedisDB()
 				//set comment id
-				commentExistKey := "commentID:" + strconv.Itoa(int(commentDB.Id))
+				commentExistKey := "comment:" + strconv.Itoa(int(commentDB.Id))
 				//set comment to video
 				rdb.ZAdd(context.Background(), strconv.Itoa(int(commentDB.VideoId)), &redis.Z{
 					Score:  float64(commentDB.CreateDate.Unix()),
@@ -176,6 +176,6 @@ func CommentActionConsumer() {
 func MakeCommentGoroutine() {
 	numConsumer := 20
 	for i := 0; i < numConsumer; i++ {
-		go CommentActionConsumer()
+		go commentActionConsumer()
 	}
 }

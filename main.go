@@ -22,7 +22,6 @@ func main() {
 	config.ReadConfig()
 	logrus.SetLevel(logrus.DebugLevel)
 	go impl.RunMessageServer()
-
 	r := gin.Default()
 	r.Use(utils.RefreshHandler())
 	r.Use(utils.AuthAdminCheck())
