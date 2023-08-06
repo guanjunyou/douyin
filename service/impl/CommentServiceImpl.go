@@ -7,6 +7,7 @@ import (
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
+	"github.com/RaymondCode/simple-demo/utils/bloomFilter"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"strconv"
@@ -22,7 +23,7 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 		return err
 	}
 
-	utils.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
+	bloomFilter.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
 
 	toMQ := models.CommentMQToVideo{
 		CommonEntity: comment.CommonEntity,
@@ -40,7 +41,7 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Comment {
 	rdb := utils.GetRedisDB()
 
-	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(videoId))))
+	exist := bloomFilter.BloomFilter.Test([]byte(strconv.Itoa(int(videoId))))
 	if !exist {
 		return nil
 	}
@@ -101,7 +102,7 @@ func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Com
 func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	rdb := utils.GetRedisDB()
 
-	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(commentId))))
+	exist := bloomFilter.BloomFilter.Test([]byte(strconv.Itoa(int(commentId))))
 	if !exist {
 		return errors.New("comment id not exist")
 	}

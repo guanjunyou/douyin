@@ -7,6 +7,7 @@ import (
 	"github.com/RaymondCode/simple-demo/router"
 	"github.com/RaymondCode/simple-demo/service/impl"
 	"github.com/RaymondCode/simple-demo/utils"
+	"github.com/RaymondCode/simple-demo/utils/bloomFilter"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -30,6 +31,7 @@ func main() {
 	router.InitRouter1(r)
 	pprof.Register(r)
 	utils.CreateGORMDB()
+	bloomFilter.InitBloomFilter()
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
@@ -39,6 +41,7 @@ func main() {
 // 加载项目依赖
 func initDeps() {
 	utils.InitFilter()
+
 	mq.InitRabbitMQ()
 	mq.InitLikeRabbitMQ()
 	mq.InitCommentRabbitMQ()
