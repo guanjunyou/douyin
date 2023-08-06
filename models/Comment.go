@@ -159,3 +159,12 @@ func GetCommentByVideoId(videoId int64) []Comment {
 	}
 	return comments
 }
+
+func GetAllCommentDBs() []CommentDB {
+	var commentDBs []CommentDB
+	err := utils.GetMysqlDB().Where("is_deleted != ?", 1).Find(&commentDBs).Error
+	if err != nil {
+		return commentDBs
+	}
+	return commentDBs
+}

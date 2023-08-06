@@ -68,3 +68,9 @@ func GetVideoById(videoId int64) (Video, error) {
 func UpdateVideo(tx *gorm.DB, video Video) {
 	tx.Save(&video)
 }
+
+func GetAllExistVideo() ([]Video, error) {
+	var videos []Video
+	err := utils.GetMysqlDB().Where("is_deleted != ?", 1).Find(&videos).Error
+	return videos, err
+}

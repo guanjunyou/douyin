@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
@@ -21,6 +22,8 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 		return err
 	}
 
+	utils.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
+
 	toMQ := models.CommentMQToVideo{
 		CommonEntity: comment.CommonEntity,
 		ActionType:   1,
@@ -36,6 +39,12 @@ func (commentService CommentServiceImpl) PostComments(comment models.Comment, vi
 // CommentList 查看视频的所有评论，按发布时间倒序
 func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Comment {
 	rdb := utils.GetRedisDB()
+
+	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(videoId))))
+	if !exist {
+		return nil
+	}
+
 	//get by id
 	commentID := rdb.ZRange(context.Background(), strconv.Itoa(int(videoId)), 0, -1)
 	if len(commentID.Val()) == 0 {
@@ -68,6 +77,12 @@ func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Com
 				continue
 			}
 			commentDB, err := models.GetCommentDBById(commentID)
+			if err != nil {
+				log.Print(err)
+				continue
+			}
+			commentJSON, err := json.Marshal(commentDB.ToComment())
+			rdb.Set(context.Background(), "comment:"+id, commentJSON, time.Hour*24)
 			comments = append(comments, commentDB.ToComment())
 			continue
 		}
@@ -85,6 +100,12 @@ func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Com
 
 func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	rdb := utils.GetRedisDB()
+
+	exist := utils.BloomFilter.Test([]byte(strconv.Itoa(int(commentId))))
+	if !exist {
+		return errors.New("comment id not exist")
+	}
+
 	//check id exist
 	commentExistKey := "commentID:" + strconv.Itoa(int(commentId))
 	if (rdb.Exists(context.Background(), commentExistKey)).Val() == 0 {
@@ -149,10 +170,6 @@ func CommentActionConsumer() {
 			}
 		}
 	}
-}
-
-func InitCommentCache() {
-
 }
 
 func MakeCommentGoroutine() {
