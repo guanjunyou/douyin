@@ -1,6 +1,9 @@
 package mq
 
 import (
+	"encoding/json"
+	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/streadway/amqp"
 	"log"
 )
@@ -27,7 +30,6 @@ func NewFollowRabbitMQ() *FollowMQ {
 
 // Publish 关注操作的发布配置。
 func (followMQ *FollowMQ) Publish(message string) {
-
 	_, err := followMQ.channel.QueueDeclare(
 		followMQ.queueName,
 		//是否持久化
@@ -62,14 +64,11 @@ func (followMQ *FollowMQ) Publish(message string) {
 
 // Consumer 关注关系的消费逻辑。
 func (followMQ *FollowMQ) Consumer() {
-
 	_, err := followMQ.channel.QueueDeclare(followMQ.queueName, true, false, false, false, nil)
-
 	if err != nil {
 		panic(err)
 	}
 
-	//2、接收消息
 	messages, err1 := followMQ.channel.Consume(
 		followMQ.queueName,
 		//用来区分多个消费者
@@ -88,17 +87,38 @@ func (followMQ *FollowMQ) Consumer() {
 		panic(err1)
 	}
 	go followMQ.consumer(messages)
-	//forever := make(chan bool)
-	log.Println(messages)
-
-	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
-
-	//<-forever
-
 }
+
 func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 	for d := range message {
-		log.Println(string(d.Body))
+		// Handle the received message
+		var data models.FollowMQToUser
+		err := json.Unmarshal(d.Body, &data)
+		if err != nil {
+			log.Printf("Error decoding message: %v", err)
+			continue
+		}
+		// Now, process the follow action based on the data received
+		follow := models.Follow{
+			UserId:       data.UserId,
+			FollowUserId: data.FollowUserId,
+		}
+		switch data.ActionType {
+		case 1: // Follow action
+			err := follow.Insert(utils.GetMysqlDB())
+			if err != nil {
+				log.Printf("Error inserting follow record: %v", err)
+				continue
+			}
+		case 2: // Unfollow action
+			err := follow.Delete(utils.GetMysqlDB())
+			if err != nil {
+				log.Printf("Error deleting follow record: %v", err)
+				continue
+			}
+		default:
+			log.Printf("Invalid action type received: %d", data.ActionType)
+		}
 	}
 }
 
@@ -107,6 +127,5 @@ var followRMQ *FollowMQ
 // InitFollowRabbitMQ 初始化rabbitMQ连接。
 func InitFollowRabbitMQ() {
 	followRMQ = NewFollowRabbitMQ()
-	followRMQ.Publish("hello word !")
 	go followRMQ.Consumer()
 }

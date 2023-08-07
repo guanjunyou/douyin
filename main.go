@@ -42,12 +42,19 @@ func initDeps() {
 	utils.InitFilter()
 
 	mq.InitRabbitMQ()
+
 	mq.InitLikeRabbitMQ()
 	mq.InitCommentRabbitMQ()
 	mq.InitFollowRabbitMQ()
+
+	mq.InitFollowRabbitMQ()
+	//impl.MakeFollowGroutine()
+
 	mq.MakeLikeChannel()
 	impl.MakeLikeGroutine()
+
 	mq.MakeCommentChannel()
 	impl.MakeCommentGoroutine()
+
 	controller.GetUserService().MakeLikeConsumers()
 }
