@@ -1,8 +1,10 @@
 package impl
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/models"
+	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/sirupsen/logrus"
 	"sync"
@@ -12,32 +14,23 @@ type RelationServiceImpl struct {
 	Logger *logrus.Logger
 }
 
-// FollowResult 定义存储过程的返回值
-type followResult struct {
-	Cnt int
-}
-
 // FollowUser 关注用户
 func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId int64, actionType int) error {
 	relationServiceImpl.Logger.Info("FollowUser\n")
 	if userId == toUserId {
 		return fmt.Errorf("你不能关注(或者取消关注)自己")
 	}
-	var sql string
-	// 1 关注 2 取消
-	switch actionType {
-	case 1:
-		sql = "CALL addFollowRelation(?, ?)"
-	case 2:
-		sql = "CALL delFollowRelation(?, ?)"
-	default:
-		return fmt.Errorf("非法actionType")
+	followMQ := mq.NewFollowRabbitMQ()
+	followData := models.FollowMQToUser{
+		UserId:       userId,
+		FollowUserId: toUserId,
+		ActionType:   actionType,
 	}
-	var result followResult
-	utils.GetMysqlDB().Raw(sql, userId, toUserId).Scan(&result)
-	if actionType != 2 && result.Cnt != 0 {
-		return fmt.Errorf("操作失败")
+	message, err := json.Marshal(followData)
+	if err != nil {
+		return err
 	}
+	followMQ.Publish(string(message))
 	return nil
 }
 
