@@ -48,13 +48,38 @@ func FollowUser(followerID, followeeID int64) error {
 
 	// 将关注者ID添加到被关注者的关注集合中
 	followeeKey := fmt.Sprintf("%v%d", config.FollowSetKey, followeeID)
-	_, err := client.SAdd(ctx, followeeKey, followerID).Result()
+	exists, err := client.Exists(ctx, followeeKey).Result()
 	if err != nil {
 		return err
+	}
+	if exists == 0 {
+		// 如果被关注者的关注集合不存在，先创建一个空集合
+		_, err := client.SAdd(ctx, followeeKey, "").Result()
+		if err != nil {
+			return err
+		}
 	}
 
 	// 将被关注者ID添加到关注者的粉丝集合中
 	followerKey := fmt.Sprintf("%v%d", config.FollowerSetKey, followerID)
+	exists, err = client.Exists(ctx, followerKey).Result()
+	if err != nil {
+		return err
+	}
+	if exists == 0 {
+		// 如果关注者的粉丝集合不存在，先创建一个空集合
+		_, err := client.SAdd(ctx, followerKey, "").Result()
+		if err != nil {
+			return err
+		}
+	}
+
+	// 执行关注操作
+	_, err = client.SAdd(ctx, followeeKey, followerID).Result()
+	if err != nil {
+		return err
+	}
+
 	_, err = client.SAdd(ctx, followerKey, followeeID).Result()
 	if err != nil {
 		// 如果添加关注者的粉丝集合失败，需要回滚之前对被关注者的关注集合的修改
