@@ -29,7 +29,7 @@ func NewFollowRabbitMQ() *FollowMQ {
 }
 
 // Publish 关注操作的发布配置。
-func (followMQ *FollowMQ) Publish(message string) {
+func (followMQ *FollowMQ) Publish(message []byte) {
 	_, err := followMQ.channel.QueueDeclare(
 		followMQ.queueName,
 		//是否持久化
@@ -54,7 +54,7 @@ func (followMQ *FollowMQ) Publish(message string) {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(message),
+			Body:        message,
 		})
 	if err1 != nil {
 		panic(err)

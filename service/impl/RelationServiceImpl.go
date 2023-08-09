@@ -29,7 +29,7 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 	if err != nil {
 		return err
 	}
-	mq.FollowRMQ.Publish(string(message))
+	mq.FollowRMQ.Publish(message)
 	return nil
 }
 
