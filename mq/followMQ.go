@@ -29,8 +29,19 @@ func NewFollowRabbitMQ() *FollowMQ {
 }
 
 // Publish 关注操作的发布配置。
-func (followMQ *FollowMQ) Publish(message string) {
-	_, err := followMQ.channel.QueueDeclare(
+func (followMQ *FollowMQ) Publish(message []byte) {
+	// 声明交换机
+	err := followMQ.channel.ExchangeDeclare(
+		followMQ.exchange, // 交换机名称
+		"direct",          // 交换机类型
+		true,              // 是否持久化
+		false,             // 是否自动删除
+		false,             // 是否内部使用
+		false,             // 是否等待确认
+		nil,               // 额外参数
+	)
+
+	_, err = followMQ.channel.QueueDeclare(
 		followMQ.queueName,
 		//是否持久化
 		true,
@@ -54,7 +65,7 @@ func (followMQ *FollowMQ) Publish(message string) {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(message),
+			Body:        message,
 		})
 	if err1 != nil {
 		panic(err)
@@ -110,22 +121,32 @@ func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 				log.Printf("Error inserting follow record: %v", err)
 				continue
 			}
+			err = utils.FollowUser(data.UserId, data.FollowUserId)
+			if err != nil {
+				log.Printf(err.Error())
+				continue
+			}
 		case 2: // Unfollow action
 			err := follow.Delete(utils.GetMysqlDB())
 			if err != nil {
 				log.Printf("Error deleting follow record: %v", err)
 				continue
 			}
+			err = utils.UnfollowUser(data.UserId, data.FollowUserId)
+			if err != nil {
+				log.Printf(err.Error())
+				continue
+			}
 		default:
 			log.Printf("Invalid action type received: %d", data.ActionType)
+			continue
 		}
 	}
 }
 
-var followRMQ *FollowMQ
+var FollowRMQ *FollowMQ
 
 // InitFollowRabbitMQ 初始化rabbitMQ连接。
 func InitFollowRabbitMQ() {
-	followRMQ = NewFollowRabbitMQ()
-	go followRMQ.Consumer()
+	FollowRMQ = NewFollowRabbitMQ()
 }

@@ -20,7 +20,6 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 	if userId == toUserId {
 		return fmt.Errorf("你不能关注(或者取消关注)自己")
 	}
-	followMQ := mq.NewFollowRabbitMQ()
 	followData := models.FollowMQToUser{
 		UserId:       userId,
 		FollowUserId: toUserId,
@@ -30,7 +29,7 @@ func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId
 	if err != nil {
 		return err
 	}
-	followMQ.Publish(string(message))
+	mq.FollowRMQ.Publish(message)
 	return nil
 }
 
@@ -96,4 +95,10 @@ func containsID(arr []models.User, id int64) bool {
 		}
 	}
 	return false
+}
+
+func MakeFollowGroutine(count int) {
+	for i := 0; i < count; i++ {
+		go mq.FollowRMQ.Consumer()
+	}
 }
