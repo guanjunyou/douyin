@@ -122,10 +122,10 @@ func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 	}
 }
 
-var followRMQ *FollowMQ
+var FollowRMQ *FollowMQ
 
 // InitFollowRabbitMQ 初始化rabbitMQ连接。
 func InitFollowRabbitMQ() {
-	followRMQ = NewFollowRabbitMQ()
-	go followRMQ.Consumer()
+	FollowRMQ = NewFollowRabbitMQ()
+	go FollowRMQ.Consumer()
 }
