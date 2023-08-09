@@ -121,14 +121,25 @@ func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 				log.Printf("Error inserting follow record: %v", err)
 				continue
 			}
+			err = utils.FollowUser(data.UserId, data.FollowUserId)
+			if err != nil {
+				log.Printf(err.Error())
+				continue
+			}
 		case 2: // Unfollow action
 			err := follow.Delete(utils.GetMysqlDB())
 			if err != nil {
 				log.Printf("Error deleting follow record: %v", err)
 				continue
 			}
+			err = utils.UnfollowUser(data.UserId, data.FollowUserId)
+			if err != nil {
+				log.Printf(err.Error())
+				continue
+			}
 		default:
 			log.Printf("Invalid action type received: %d", data.ActionType)
+			continue
 		}
 	}
 }
