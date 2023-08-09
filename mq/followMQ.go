@@ -30,7 +30,18 @@ func NewFollowRabbitMQ() *FollowMQ {
 
 // Publish 关注操作的发布配置。
 func (followMQ *FollowMQ) Publish(message []byte) {
-	_, err := followMQ.channel.QueueDeclare(
+	// 声明交换机
+	err := followMQ.channel.ExchangeDeclare(
+		followMQ.exchange, // 交换机名称
+		"direct",          // 交换机类型
+		true,              // 是否持久化
+		false,             // 是否自动删除
+		false,             // 是否内部使用
+		false,             // 是否等待确认
+		nil,               // 额外参数
+	)
+
+	_, err = followMQ.channel.QueueDeclare(
 		followMQ.queueName,
 		//是否持久化
 		true,
@@ -127,5 +138,4 @@ var FollowRMQ *FollowMQ
 // InitFollowRabbitMQ 初始化rabbitMQ连接。
 func InitFollowRabbitMQ() {
 	FollowRMQ = NewFollowRabbitMQ()
-	go FollowRMQ.Consumer()
 }

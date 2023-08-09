@@ -96,3 +96,9 @@ func containsID(arr []models.User, id int64) bool {
 	}
 	return false
 }
+
+func MakeFollowGroutine(count int) {
+	for i := 0; i < count; i++ {
+		go mq.FollowRMQ.Consumer()
+	}
+}

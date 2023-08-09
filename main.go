@@ -48,7 +48,7 @@ func initDeps() {
 	mq.InitFollowRabbitMQ()
 
 	mq.InitFollowRabbitMQ()
-	//impl.MakeFollowGroutine()
+	impl.MakeFollowGroutine(20)
 
 	mq.MakeLikeChannel()
 	impl.MakeLikeGroutine()
