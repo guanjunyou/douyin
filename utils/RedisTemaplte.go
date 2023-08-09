@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/config"
+	"github.com/RaymondCode/simple-demo/models"
+	"github.com/go-redis/redis/v8"
 	"time"
 )
 
@@ -119,9 +121,27 @@ func GetUserFollowing(userID int64) ([]int64, error) {
 	client := GetRedisDB()
 	ctx := context.Background()
 	key := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
+
+	// 尝试从 Redis 获取数据
 	following, err := client.SMembers(ctx, key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return nil, err
+	}
+
+	// 如果 Redis 中没有数据，则从 MySQL 获取
+	if err == redis.Nil {
+		following, err = getFollowingFromMySQL(userID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 启动线程异步将数据添加到 Redis
+		go func() {
+			err := addFollowingToRedis(userID, following)
+			if err != nil {
+				// 处理错误，例如记录日志
+			}
+		}()
 	}
 
 	// 转换关注列表中的用户ID为int64类型
@@ -143,9 +163,27 @@ func GetUserFollowers(userID int64) ([]int64, error) {
 	client := GetRedisDB()
 	ctx := context.Background()
 	key := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
+
+	// 尝试从 Redis 获取数据
 	followers, err := client.SMembers(ctx, key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return nil, err
+	}
+
+	// 如果 Redis 中没有数据，则从 MySQL 获取
+	if err == redis.Nil {
+		followers, err = getFollowersFromMySQL(userID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 启动线程异步将数据添加到 Redis
+		go func() {
+			err := addFollowersToRedis(userID, followers)
+			if err != nil {
+				// 处理错误，例如记录日志
+			}
+		}()
 	}
 
 	// 转换粉丝列表中的用户ID为int64类型
@@ -171,10 +209,26 @@ func GetUserFriends(userID int64) ([]int64, error) {
 	followingKey := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
 	followersKey := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
 
-	// 使用SINTER命令获取交集（朋友列表）
+	// 尝试从 Redis 获取数据
 	friends, err := client.SInter(ctx, followingKey, followersKey).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return nil, err
+	}
+
+	// 如果 Redis 中没有数据，则从 MySQL 获取
+	if err == redis.Nil {
+		friends, err = getFriendsFromMySQL(userID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 启动线程异步将数据添加到 Redis
+		go func() {
+			err := addFriendsToRedis(userID, friends)
+			if err != nil {
+				// 处理错误，例如记录日志
+			}
+		}()
 	}
 
 	// 转换朋友列表中的用户ID为int64类型
@@ -189,4 +243,102 @@ func GetUserFriends(userID int64) ([]int64, error) {
 	}
 
 	return friendIDs, nil
+}
+
+// 从 MySQL 获取关注列表
+func getFollowingFromMySQL(userID int64) ([]string, error) {
+	db := GetMysqlDB()
+
+	var follows []models.Follow
+	err := db.Where("follower_id = ?", userID).Find(&follows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var following []string
+	for _, follow := range follows {
+		following = append(following, fmt.Sprintf("%d", follow.FollowUserId))
+	}
+
+	return following, nil
+}
+
+// 从 MySQL 获取粉丝列表
+func getFollowersFromMySQL(userID int64) ([]string, error) {
+	db := GetMysqlDB()
+
+	var follows []models.Follow
+	err := db.Where("follow_user_id = ?", userID).Find(&follows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var followers []string
+	for _, follow := range follows {
+		followers = append(followers, fmt.Sprintf("%d", follow.UserId))
+	}
+
+	return followers, nil
+}
+
+// 从 MySQL 获取朋友列表（关注和粉丝的交集）
+func getFriendsFromMySQL(userID int64) ([]string, error) {
+	db := GetMysqlDB()
+
+	// 获取关注列表和粉丝列表的交集（朋友列表）
+	var friends []string
+	subQuery := db.Table("follows").Select("follow_user_id as id").Where("user_id = ?", userID)
+	err := db.Table("follows").Where("follow_user_id = ? AND user_id IN (?)", userID, subQuery).Find(&friends).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var friendIDs []string
+	for _, friend := range friends {
+		friendIDs = append(friendIDs, fmt.Sprintf("%d", friend))
+	}
+
+	return friendIDs, nil
+}
+
+// 将关注列表添加到 Redis
+func addFollowingToRedis(userID int64, following []string) error {
+	client := GetRedisDB()
+	ctx := context.Background()
+	key := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
+
+	_, err := client.SAdd(ctx, key, following).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 将粉丝列表添加到 Redis
+func addFollowersToRedis(userID int64, followers []string) error {
+	client := GetRedisDB()
+	ctx := context.Background()
+	key := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
+
+	_, err := client.SAdd(ctx, key, followers).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 将朋友列表添加到 Redis
+func addFriendsToRedis(userID int64, friends []string) error {
+	client := GetRedisDB()
+	ctx := context.Background()
+	key := fmt.Sprintf("%v%d", config.FriendSetKey, userID)
+
+	_, err := client.SAdd(ctx, key, friends).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

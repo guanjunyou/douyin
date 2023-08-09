@@ -51,6 +51,7 @@ var (
 	TokenKey       string  = "token:"
 	FollowSetKey           = "follow_set_key:"
 	FollowerSetKey         = "follower_set_key:"
+	FriendSetKey           = "friend_set_key:"
 	LikeKey        string  = "Like:"
 	LikeKeyTTL     float64 = 3600
 	LikeLock       string  = "likeLock"
