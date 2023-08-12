@@ -2,6 +2,7 @@ package mq
 
 import (
 	"encoding/json"
+	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/streadway/amqp"
@@ -10,39 +11,37 @@ import (
 
 type FollowMQ struct {
 	RabbitMQ
-	channel   *amqp.Channel
-	queueName string
-	exchange  string
+	Channel   *amqp.Channel
+	QueueName string
+	Exchange  string
 	key       string
+}
+
+// 初始化 channel
+// var LikeChannel chan models.LikeMQToVideo
+var FollowChannel chan models.FollowMQToUser
+
+func MakeFollowChannel() {
+	ch := make(chan models.FollowMQToUser, config.BufferSize)
+	FollowChannel = ch
 }
 
 // NewFollowRabbitMQ   获取followMQ的对应管道。
 func NewFollowRabbitMQ() *FollowMQ {
 	followMQ := &FollowMQ{
 		RabbitMQ:  *Rmq,
-		queueName: "followMQ",
+		QueueName: "followMQ",
 	}
 	ch, err := followMQ.conn.Channel()
-	followMQ.channel = ch
+	followMQ.Channel = ch
 	Rmq.failOnErr(err, "获取通道失败")
 	return followMQ
 }
 
 // Publish 关注操作的发布配置。
-func (followMQ *FollowMQ) Publish(message []byte) {
-	// 声明交换机
-	err := followMQ.channel.ExchangeDeclare(
-		followMQ.exchange, // 交换机名称
-		"direct",          // 交换机类型
-		true,              // 是否持久化
-		false,             // 是否自动删除
-		false,             // 是否内部使用
-		false,             // 是否等待确认
-		nil,               // 额外参数
-	)
-
-	_, err = followMQ.channel.QueueDeclare(
-		followMQ.queueName,
+func (followMQ *FollowMQ) Publish(message string) {
+	_, err := followMQ.Channel.QueueDeclare(
+		followMQ.QueueName,
 		//是否持久化
 		true,
 		//是否为自动删除
@@ -58,14 +57,14 @@ func (followMQ *FollowMQ) Publish(message []byte) {
 		panic(err)
 	}
 
-	err1 := followMQ.channel.Publish(
-		followMQ.exchange,
-		followMQ.queueName,
+	err1 := followMQ.Channel.Publish(
+		followMQ.Exchange,
+		followMQ.QueueName,
 		false,
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        message,
+			Body:        []byte(message),
 		})
 	if err1 != nil {
 		panic(err)
@@ -74,31 +73,31 @@ func (followMQ *FollowMQ) Publish(message []byte) {
 }
 
 // Consumer 关注关系的消费逻辑。
-func (followMQ *FollowMQ) Consumer() {
-	_, err := followMQ.channel.QueueDeclare(followMQ.queueName, true, false, false, false, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	messages, err1 := followMQ.channel.Consume(
-		followMQ.queueName,
-		//用来区分多个消费者
-		"",
-		//是否自动应答
-		true,
-		//是否具有排他性
-		false,
-		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
-		false,
-		//消息队列是否阻塞
-		false,
-		nil,
-	)
-	if err1 != nil {
-		panic(err1)
-	}
-	go followMQ.consumer(messages)
-}
+//func (followMQ *FollowMQ) Consumer() {
+//	_, err := followMQ.Channel.QueueDeclare(followMQ.QueueName, true, false, false, false, nil)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	messages, err1 := followMQ.Channel.Consume(
+//		followMQ.QueueName,
+//		//用来区分多个消费者
+//		"",
+//		//是否自动应答
+//		true,
+//		//是否具有排他性
+//		false,
+//		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
+//		false,
+//		//消息队列是否阻塞
+//		false,
+//		nil,
+//	)
+//	if err1 != nil {
+//		panic(err1)
+//	}
+//	go followMQ.consumer(messages)
+//}
 
 func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 	for d := range message {
@@ -121,25 +120,14 @@ func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
 				log.Printf("Error inserting follow record: %v", err)
 				continue
 			}
-			err = utils.FollowUser(data.UserId, data.FollowUserId)
-			if err != nil {
-				log.Printf(err.Error())
-				continue
-			}
 		case 2: // Unfollow action
 			err := follow.Delete(utils.GetMysqlDB())
 			if err != nil {
 				log.Printf("Error deleting follow record: %v", err)
 				continue
 			}
-			err = utils.UnfollowUser(data.UserId, data.FollowUserId)
-			if err != nil {
-				log.Printf(err.Error())
-				continue
-			}
 		default:
 			log.Printf("Invalid action type received: %d", data.ActionType)
-			continue
 		}
 	}
 }
@@ -149,4 +137,5 @@ var FollowRMQ *FollowMQ
 // InitFollowRabbitMQ 初始化rabbitMQ连接。
 func InitFollowRabbitMQ() {
 	FollowRMQ = NewFollowRabbitMQ()
+	//go FollowRMQ.Consumer()
 }

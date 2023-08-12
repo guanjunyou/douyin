@@ -1,16 +1,19 @@
 package impl
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
-	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
+	"gopkg.in/errgo.v2/errors"
+	"log"
+	"strconv"
 	"sync"
+	"time"
 )
 
 type RelationServiceImpl struct {
@@ -20,20 +23,246 @@ type RelationServiceImpl struct {
 // FollowUser 关注用户
 func (relationServiceImpl RelationServiceImpl) FollowUser(userId int64, toUserId int64, actionType int) error {
 	relationServiceImpl.Logger.Info("FollowUser\n")
+
 	if userId == toUserId {
 		return fmt.Errorf("你不能关注(或者取消关注)自己")
 	}
-	followData := models.FollowMQToUser{
-		UserId:       userId,
-		FollowUserId: toUserId,
-		ActionType:   actionType,
+	//分布式锁 不能让用户连续两次关注或者取消关注同一个用户的请求进入
+	userIdStr := strconv.FormatInt(userId, 10)
+	toUserIdStr := strconv.FormatInt(toUserId, 10)
+
+	lockKey := config.FollowLock + userIdStr + toUserIdStr
+	unFollowLockKey := config.UnFollowLock + userIdStr + toUserIdStr
+
+	if actionType == 1 {
+		isSuccess, _ := utils.GetRedisDB().SetNX(context.Background(), lockKey, "0", time.Duration(config.FollowLockTTL)*time.Second).Result()
+		if isSuccess == false {
+			log.Println("已关注")
+			return errors.New("已关注")
+		} else {
+			utils.GetRedisDB().Del(context.Background(), unFollowLockKey)
+		}
+	} else {
+		isSuccess, _ := utils.GetRedisDB().SetNX(context.Background(), unFollowLockKey, "0", time.Duration(config.FollowLockTTL)*time.Second).Result()
+		if isSuccess == false {
+			log.Println("已取消关注")
+			return errors.New("已取消关注")
+		} else {
+			utils.GetRedisDB().Del(context.Background(), lockKey)
+		}
 	}
-	message, err := json.Marshal(followData)
+
+	var isExists bool = false
+	var err error
+	var follow *models.Follow
+
+	userFollowKey := config.FollowKey + userIdStr
+	//看看缓存中有没有这个集合
+	exits, _ := utils.GetRedisDB().Exists(context.Background(), userFollowKey).Result()
+	if exits != 0 {
+		// 看看这个集合中有没有这个ID
+		result, _ := utils.GetRedisDB().SIsMember(context.Background(), userFollowKey, userIdStr).Result()
+		isExists = result
+		// 如果缓存里面的 Set 里面没有就要从数据库里面查
+		if !isExists {
+			follow, err = getFollowByUserIdAndToUserId(userId, toUserId)
+			if err != nil {
+				log.Printf("查询关注记录发生异常 = %v", err)
+				return err
+			}
+			if follow.Id != 0 {
+				isExists = true
+			}
+		}
+	} else {
+		// 缓存中没有则从数据库找
+		follow, err = getFollowByUserIdAndToUserId(userId, toUserId)
+		if err != nil {
+			log.Printf("查询关注记录发生异常 = %v", err)
+			return err
+		}
+
+		if follow.Id != 0 {
+			isExists = true
+		}
+
+	}
+
+	if actionType == 1 {
+
+		if isExists {
+			log.Printf("该用户已关注")
+			//tx.Rollback()
+			err = errors.New("已关注")
+			return err
+		}
+
+		//mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		mqData := models.FollowMQToUser{UserId: userId, FollowUserId: toUserId, ActionType: actionType}
+		// 加入 channel
+		mq.FollowChannel <- mqData
+		jsonData, err := json.Marshal(mqData)
+		if err != nil {
+			log.Println("json序列化失败 = #{err}")
+			//TODO 处理失败导致的数据不一致
+		}
+		//加入消息队列
+		mq.FollowRMQ.Publish(string(jsonData))
+
+		return nil
+
+	} else if actionType == 2 {
+
+		if !isExists && (follow == nil || follow.Id == 0) {
+			log.Printf("未找到要取消的点赞记录")
+			err = errors.New("-2")
+			//tx.Rollback()
+			return err
+		}
+
+		//mqData := models.LikeMQToVideo{UserId: userId, VideoId: videoId, ActionType: actionType}
+		mqData := models.FollowMQToUser{UserId: userId, FollowUserId: toUserId, ActionType: actionType}
+		// 加入 channel
+		mq.FollowChannel <- mqData
+		jsonData, err := json.Marshal(mqData)
+		if err != nil {
+			log.Printf("json序列化失败 = #{err}")
+			//TODO 处理失败导致的数据不一致
+		}
+		//加入消息队列
+		mq.FollowRMQ.Publish(string(jsonData))
+		// TODO 消息队列处理失败会导致数据不一致
+
+		return nil
+
+	}
+	return nil
+}
+
+func FollowConsumer(ch <-chan models.FollowMQToUser) {
+	for {
+		select {
+		case msg := <-ch:
+			// 在这里处理接收到的消息
+			tx := utils.GetMysqlDB().Begin()
+			if msg.ActionType == 1 {
+				follow := models.Follow{
+					CommonEntity: utils.NewCommonEntity(),
+					UserId:       msg.UserId,
+					FollowUserId: msg.FollowUserId,
+				}
+				err1 := follow.Insert(tx)
+				if err1 != nil {
+					log.Printf(err1.Error())
+					tx.Rollback()
+				}
+				tx.Commit()
+
+				userIdStr := strconv.FormatInt(msg.UserId, 10)
+				toUserIdStr := strconv.FormatInt(msg.FollowUserId, 10)
+				followSetKey := config.FollowKey + userIdStr
+				followerSetKey := config.FollowerKey + toUserIdStr
+				exists, _ := utils.GetRedisDB().Exists(context.Background(), followSetKey).Result()
+				if exists == 0 { //缓存里面没有
+					errBuildRedis := BuildFollowRedis(msg.UserId)
+					if errBuildRedis != nil {
+						log.Println("重建缓存失败", errBuildRedis)
+					}
+				} else {
+					utils.GetRedisDB().SAdd(context.Background(), followSetKey, toUserIdStr)
+				}
+
+				exists1, _ := utils.GetRedisDB().Exists(context.Background(), followerSetKey).Result()
+				if exists1 == 0 { //缓存里面没有
+					errBuildRedis := BuildFollowerRedis(msg.FollowUserId)
+					if errBuildRedis != nil {
+						log.Println("重建缓存失败", errBuildRedis)
+					}
+				} else {
+					utils.GetRedisDB().SAdd(context.Background(), followerSetKey, userIdStr)
+				}
+			}
+
+			if msg.ActionType == 2 {
+				follow, err := getFollowByUserIdAndToUserId(msg.UserId, msg.FollowUserId)
+				if err != nil {
+					tx.Rollback()
+				}
+				err1 := follow.Delete(tx)
+				if err1 != nil {
+					log.Printf(err1.Error())
+					tx.Rollback()
+				}
+				tx.Commit()
+
+				userIdStr := strconv.FormatInt(msg.UserId, 10)
+				toUserIdStr := strconv.FormatInt(msg.FollowUserId, 10)
+				followSetKey := config.FollowKey + userIdStr
+				followerSetKey := config.FollowerKey + toUserIdStr
+				// 删除缓存 SET 中的ID ， 避免脏数据产生
+				utils.GetRedisDB().SRem(context.Background(), followSetKey, toUserIdStr)
+				utils.GetRedisDB().SRem(context.Background(), followerSetKey, userIdStr)
+			}
+		default:
+			// 如果channel为空，暂停一段时间后重新监听
+			time.Sleep(time.Millisecond * 1)
+		}
+	}
+}
+
+// 重建缓存
+func BuildFollowRedis(userId int64) error {
+	relationService := RelationServiceImpl{}
+	relationService.Logger = logrus.New()
+	idSet, err := relationService.GetFollows(userId)
 	if err != nil {
 		return err
 	}
-	mq.FollowRMQ.Publish(message)
-	return nil
+	userIdStr := strconv.FormatInt(userId, 10)
+	followSetKey := config.FollowKey + userIdStr
+	var strValues []string
+	for i := range idSet {
+		strValues = append(strValues, strconv.FormatInt(idSet[i].Id, 10))
+	}
+
+	ctx := context.Background()
+	err = utils.GetRedisDB().SAdd(ctx, followSetKey, strValues).Err()
+	errSetTime := utils.GetRedisDB().Expire(ctx, followSetKey, time.Duration(config.FollowKeyTTL)*time.Second).Err()
+	if errSetTime != nil {
+		log.Println("redis 时间设置失败", errSetTime.Error())
+	}
+	return err
+}
+
+func BuildFollowerRedis(toUserId int64) error {
+	relationService := RelationServiceImpl{}
+	relationService.Logger = logrus.New()
+	idSet, err := relationService.GetFollowers(toUserId)
+	if err != nil {
+		return err
+	}
+	toUserIdStr := strconv.FormatInt(toUserId, 10)
+	followerSetKey := config.FollowerKey + toUserIdStr
+	var strValues []string
+	for i := range idSet {
+		strValues = append(strValues, strconv.FormatInt(idSet[i].Id, 10))
+	}
+
+	ctx := context.Background()
+	err = utils.GetRedisDB().SAdd(ctx, followerSetKey, strValues).Err()
+	errSetTime := utils.GetRedisDB().Expire(ctx, followerSetKey, time.Duration(config.FollowKeyTTL)*time.Second).Err()
+	if errSetTime != nil {
+		log.Println("redis 时间设置失败", errSetTime.Error())
+	}
+	return err
+}
+
+// 创建消费者协程
+func MakeFollowGroutine() {
+	numConsumers := 20
+	for i := 0; i < numConsumers; i++ {
+		go FollowConsumer(mq.FollowChannel)
+	}
 }
 
 // GetFollows 查询关注列表
@@ -100,235 +329,8 @@ func containsID(arr []models.User, id int64) bool {
 	return false
 }
 
-func MakeFollowGroutine(count int) {
-	for i := 0; i < count; i++ {
-		go mq.FollowRMQ.Consumer()
-	}
-}
-
-// GetUserFollowing 获取某个用户的关注列表
-func GetUserFollowing(userID int64) ([]int64, error) {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-	key := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
-
-	// 尝试从 Redis 获取数据
-	following, err := client.SMembers(ctx, key).Result()
-	if err != nil && err != redis.Nil {
-		return nil, err
-	}
-
-	// 如果 Redis 中没有数据，则从 MySQL 获取
-	if err == redis.Nil {
-		following, err = getFollowingFromMySQL(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		// 启动线程异步将数据添加到 Redis
-		go func() {
-			err := addFollowingToRedis(userID, following)
-			if err != nil {
-				// 处理错误，例如记录日志
-			}
-		}()
-	}
-
-	// 转换关注列表中的用户ID为int64类型
-	var followingIDs []int64
-	for _, f := range following {
-		var followeeID int64
-		_, err := fmt.Sscanf(f, "%d", &followeeID)
-		if err != nil {
-			return nil, err
-		}
-		followingIDs = append(followingIDs, followeeID)
-	}
-
-	return followingIDs, nil
-}
-
-// GetUserFollowers 获取某个用户的粉丝列表
-func GetUserFollowers(userID int64) ([]int64, error) {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-	key := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
-
-	// 尝试从 Redis 获取数据
-	followers, err := client.SMembers(ctx, key).Result()
-	if err != nil && err != redis.Nil {
-		return nil, err
-	}
-
-	// 如果 Redis 中没有数据，则从 MySQL 获取
-	if err == redis.Nil {
-		followers, err = getFollowersFromMySQL(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		// 启动线程异步将数据添加到 Redis
-		go func() {
-			err := addFollowersToRedis(userID, followers)
-			if err != nil {
-				// 处理错误，例如记录日志
-			}
-		}()
-	}
-
-	// 转换粉丝列表中的用户ID为int64类型
-	var followerIDs []int64
-	for _, f := range followers {
-		var followerID int64
-		_, err := fmt.Sscanf(f, "%d", &followerID)
-		if err != nil {
-			return nil, err
-		}
-		followerIDs = append(followerIDs, followerID)
-	}
-
-	return followerIDs, nil
-}
-
-// GetUserFriends 获取某个用户的朋友列表（关注和粉丝的交集）
-func GetUserFriends(userID int64) ([]int64, error) {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-
-	// 获取关注列表和粉丝列表的键名
-	followingKey := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
-	followersKey := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
-
-	// 尝试从 Redis 获取数据
-	friends, err := client.SInter(ctx, followingKey, followersKey).Result()
-	if err != nil && err != redis.Nil {
-		return nil, err
-	}
-
-	// 如果 Redis 中没有数据，则从 MySQL 获取
-	if err == redis.Nil {
-		friends, err = getFriendsFromMySQL(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		// 启动线程异步将数据添加到 Redis
-		go func() {
-			err := addFriendsToRedis(userID, friends)
-			if err != nil {
-				// 处理错误，例如记录日志
-			}
-		}()
-	}
-
-	// 转换朋友列表中的用户ID为int64类型
-	var friendIDs []int64
-	for _, f := range friends {
-		var friendID int64
-		_, err := fmt.Sscanf(f, "%d", &friendID)
-		if err != nil {
-			return nil, err
-		}
-		friendIDs = append(friendIDs, friendID)
-	}
-
-	return friendIDs, nil
-}
-
-// 从 MySQL 获取关注列表
-func getFollowingFromMySQL(userID int64) ([]string, error) {
-	db := utils.GetMysqlDB()
-
-	var follows []models.Follow
-	err := db.Where("follower_id = ?", userID).Find(&follows).Error
-	if err != nil {
-		return nil, err
-	}
-
-	var following []string
-	for _, follow := range follows {
-		following = append(following, fmt.Sprintf("%d", follow.FollowUserId))
-	}
-
-	return following, nil
-}
-
-// 从 MySQL 获取粉丝列表
-func getFollowersFromMySQL(userID int64) ([]string, error) {
-	db := utils.GetMysqlDB()
-
-	var follows []models.Follow
-	err := db.Where("follow_user_id = ?", userID).Find(&follows).Error
-	if err != nil {
-		return nil, err
-	}
-
-	var followers []string
-	for _, follow := range follows {
-		followers = append(followers, fmt.Sprintf("%d", follow.UserId))
-	}
-
-	return followers, nil
-}
-
-// 从 MySQL 获取朋友列表（关注和粉丝的交集）
-func getFriendsFromMySQL(userID int64) ([]string, error) {
-	db := utils.GetMysqlDB()
-
-	// 获取关注列表和粉丝列表的交集（朋友列表）
-	var friends []string
-	subQuery := db.Table("follows").Select("follow_user_id as id").Where("user_id = ?", userID)
-	err := db.Table("follows").Where("follow_user_id = ? AND user_id IN (?)", userID, subQuery).Find(&friends).Error
-	if err != nil {
-		return nil, err
-	}
-
-	var friendIDs []string
-	for _, friend := range friends {
-		friendIDs = append(friendIDs, fmt.Sprintf("%d", friend))
-	}
-
-	return friendIDs, nil
-}
-
-// 将关注列表添加到 Redis
-func addFollowingToRedis(userID int64, following []string) error {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-	key := fmt.Sprintf("%v%d", config.FollowSetKey, userID)
-
-	_, err := client.SAdd(ctx, key, following).Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// 将粉丝列表添加到 Redis
-func addFollowersToRedis(userID int64, followers []string) error {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-	key := fmt.Sprintf("%v%d", config.FollowerSetKey, userID)
-
-	_, err := client.SAdd(ctx, key, followers).Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// 将朋友列表添加到 Redis
-func addFriendsToRedis(userID int64, friends []string) error {
-	client := utils.GetRedisDB()
-	ctx := context.Background()
-	key := fmt.Sprintf("%v%d", config.FriendSetKey, userID)
-
-	_, err := client.SAdd(ctx, key, friends).Result()
-	if err != nil {
-		return err
-	}
-
-	return nil
+func getFollowByUserIdAndToUserId(userId int64, toUserId int64) (*models.Follow, error) {
+	res := &models.Follow{}
+	err := utils.GetMysqlDB().Model(models.Follow{}).Where("user_id = ? AND follow_user_id = ? AND is_deleted = ?", userId, toUserId, 0).Find(res).Error
+	return res, err
 }
