@@ -1,8 +1,6 @@
 package models
 
 import (
-	"errors"
-	"fmt"
 	"github.com/RaymondCode/simple-demo/utils"
 	"gorm.io/gorm"
 )
@@ -34,33 +32,12 @@ func (f *Follow) Update(tx *gorm.DB) (err error) {
 // Insert 插入记录
 func (f *Follow) Insert(tx *gorm.DB) (err error) {
 	f.CommonEntity = utils.NewCommonEntity()
-	userId := f.UserId
-	toUserId := f.FollowUserId
-	if userId == toUserId {
-		return fmt.Errorf("你不能关注(或者取消关注)自己")
-	}
-	sql := "CALL addFollowRelation(?, ?)"
-	var result int
-	tx.Raw(sql, userId, toUserId).Scan(&result)
-	if result != 0 {
-		return errors.New("插入失败")
-	}
+	err = tx.Create(f).Error
 	return
 }
 
 // Delete 删除
 func (f *Follow) Delete(tx *gorm.DB) (err error) {
-	f.CommonEntity = utils.NewCommonEntity()
-	userId := f.UserId
-	toUserId := f.FollowUserId
-	if userId == toUserId {
-		return fmt.Errorf("你不能关注(或者取消关注)自己")
-	}
-	sql := "CALL delFollowRelation(?, ?)"
-	var result int
-	tx.Raw(sql, userId, toUserId).Scan(&result)
-	if result != 0 {
-		return errors.New("删除失败")
-	}
+	err = tx.Where("id = ?", f.Id).Delete(f).Error
 	return
 }

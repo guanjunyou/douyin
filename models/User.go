@@ -78,5 +78,11 @@ func SaveUser(user User) error {
 
 func UpdateUser(tx *gorm.DB, user User) error {
 	err := tx.Save(&user).Error
-	return err
+	if err != nil {
+		return err
+	}
+	userStr, _ := json.Marshal(user)
+	userKey := config.UserKey + strconv.FormatInt(user.Id, 10)
+	utils.GetRedisDB().Set(context.Background(), userKey, userStr, time.Duration(config.UsedrKeyTTL)*time.Second)
+	return nil
 }
