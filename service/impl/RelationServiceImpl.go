@@ -3,17 +3,19 @@ package impl
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/RaymondCode/simple-demo/config"
 	"github.com/RaymondCode/simple-demo/models"
 	"github.com/RaymondCode/simple-demo/mq"
 	"github.com/RaymondCode/simple-demo/utils"
 	"github.com/sirupsen/logrus"
+
 	"golang.org/x/net/context"
 	"gopkg.in/errgo.v2/errors"
-	"log"
-	"strconv"
-	"sync"
-	"time"
 )
 
 type RelationServiceImpl struct {
@@ -269,9 +271,29 @@ func MakeFollowGroutine() {
 func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]models.User, error) {
 	relationServiceImpl.Logger.Info("GetFollows\n")
 	var users []models.User
-	err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
-	if err != nil {
-		return nil, err
+
+	// 查询Redis中是否存在该用户ID，如果存在则，则使用协程获取数据并查询放到users中，否则原逻辑
+	follows := utils.GetRedisDB().SMembers(context.Background(), fmt.Sprintf("follow:%d", userId)).Val()
+
+	fmt.Println("follows = ", follows)
+
+	if len(follows) > 0 {
+		users = make([]models.User, len(follows))
+		var wg sync.WaitGroup
+		tx := utils.GetMysqlDB().Begin()
+		for i, v := range follows {
+			wg.Add(1)
+			go func(index int, value string) {
+				defer wg.Done()
+				tx.Table("user").Where("id = ? and is_deleted = ?", value, 0).Find(users[index])
+			}(i, v)
+		}
+		wg.Wait()
+	} else {
+		err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//协程并发更新，isFollow 为 True 前端才能显示已关注
@@ -293,6 +315,27 @@ func (relationServiceImpl RelationServiceImpl) GetFollows(userId int64) ([]model
 func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]models.User, error) {
 	relationServiceImpl.Logger.Info("GetFollowers")
 	var users []models.User
+
+	// 查询redis中有没有粉丝列表集合，如果有则启动多协程查询，如果没有则原逻辑
+	followers := utils.GetRedisDB().SMembers(context.Background(), fmt.Sprintf("follower:%d", userId)).Val()
+	fmt.Println("followers = ", followers)
+
+	if len(followers) > 0 {
+		users = make([]models.User, len(followers))
+		var wg sync.WaitGroup
+		tx := utils.GetMysqlDB().Begin()
+		for i, v := range followers {
+			wg.Add(1)
+			go func(index int, value string) {
+				defer wg.Done()
+				tx.Table("user").Where("id = ? and is_deleted = ?", value, 0).Find(users[index])
+			}(i, v)
+		}
+		wg.Wait()
+
+		return users, nil
+	}
+
 	err := utils.GetMysqlDB().Table("follow").Where("follow_user_id = ? AND is_deleted != ?", userId, 1).Find(&users).Error
 	if err != nil {
 		return nil, err
@@ -302,21 +345,74 @@ func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]mod
 
 // GetFriends 查询好友列表
 func (relationServiceImpl RelationServiceImpl) GetFriends(userId int64) ([]models.User, error) {
-	follows, err := relationServiceImpl.GetFollows(userId)
-	if err != nil {
-		return nil, err
+
+	jugeExist(userId, "follow", fromMysqlToRedis)
+
+	jugeExist(userId, "follower", fromMysqlToRedis)
+
+	key1 := fmt.Sprintf("%s:%d", "follow", userId)
+	key2 := fmt.Sprintf("%s:%d", "follower", userId)
+	vals := utils.GetRedisDB().SInter(context.Background(), key1, key2).Val()
+
+	users := make([]models.User, 0)
+	err := utils.GetMysqlDB().Table("user").Find(&users, vals).Error
+
+	return users, err
+
+	// follows, err := relationServiceImpl.GetFollows(userId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// followers, err := relationServiceImpl.GetFollowers(userId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// var friends []models.User
+	// for _, user := range followers {
+	// 	if containsID(follows, user.Id) {
+	// 		friends = append(friends, user)
+	// 	}
+	// }
+	// return friends, nil
+}
+
+func fromMysqlToRedis(typeStr string, userId int64) (err error) {
+
+	var wh string
+	var s string
+
+	if typeStr == "follow" {
+		wh = "user_id = ? and is_deleted = ?"
+		s = "follow_user_id"
+	} else {
+		wh = "follow_user_id = ? and is_deleted = ?"
+		s = "user_id"
 	}
-	followers, err := relationServiceImpl.GetFollowers(userId)
-	if err != nil {
-		return nil, err
+
+	userIds := make([]int64, 0)
+	if err = utils.GetMysqlDB().Table("follow").Select(s).Where(wh, userId, 0).Find(&userIds).Error; err != nil {
+		return
 	}
-	var friends []models.User
-	for _, user := range followers {
-		if containsID(follows, user.Id) {
-			friends = append(friends, user)
-		}
+
+	key := fmt.Sprintf("%s:%d", typeStr, userId)
+	if len(userIds) > 0 {
+		redisDB := utils.GetRedisDB()
+		redisDB.SAdd(context.Background(), key, userIds)
 	}
-	return friends, nil
+
+	return
+}
+
+// 判断redis中是否存在key，并且不存在时，调用回调函数
+func jugeExist(userId int64, typeStr string, callback func(t string, u int64) error) (err error) {
+	followerExists := utils.GetRedisDB().Exists(context.Background(), fmt.Sprintf("%s:%d", typeStr, userId)).Val()
+
+	if followerExists == 0 {
+		// 不存在
+		err = callback(typeStr, userId)
+		return
+	}
+	return
 }
 
 // containsID 辅助函数，用于检查指定的 id 是否在数组中存在
